@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Koroi Drama Multiverse</title>
+<link rel="icon" href="data:,">
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap');
+
+:root{
+--red:#E50914;
+--bg:#0b0b0f;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+font-family:Poppins;
+background:var(--bg);
+color:white;
+overflow:hidden;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+height:100vh;
+}
+
+/* Animated background logo */
+body::before{
+content:"";
+position:fixed;
+inset:0;
+background:url("https://i.imgur.com/MC7KXb2.png") center/40% no-repeat;
+opacity:.04;
+animation:spin 120s linear infinite;
+z-index:-1;
+}
+
+@keyframes spin{
+from{transform:rotate(0deg)}
+to{transform:rotate(360deg)}
+}
+
+.logo{
+display:flex;
+align-items:center;
+gap:15px;
+margin-bottom:20px;
+}
+
+.logo img{
+width:90px;
+}
+
+.logo h1{
+font-size:36px;
+font-weight:800;
+background:linear-gradient(90deg,#ff3d3d,#ff0000,#ff5c5c);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+
+.tagline{
+font-size:14px;
+opacity:.7;
+margin-bottom:50px;
+letter-spacing:1px;
+}
+
+.platforms{
+display:flex;
+gap:30px;
+flex-wrap:wrap;
+justify-content:center;
+}
+
+.platform-card{
+width:220px;
+height:320px;
+border-radius:16px;
+overflow:hidden;
+cursor:pointer;
+position:relative;
+transition:all .4s ease;
+background:#111;
+display:flex;
+align-items:center;
+justify-content:center;
+font-weight:700;
+font-size:20px;
+}
+
+.platform-card:hover{
+transform:scale(1.05);
+box-shadow:0 0 40px rgba(229,9,20,.5);
+}
+
+.platform-card::after{
+content:"";
+position:absolute;
+inset:0;
+background:linear-gradient(to top,rgba(0,0,0,.8),transparent);
+}
+
+.platform-title{
+position:absolute;
+bottom:20px;
+z-index:2;
+}
+
+.fade-out{
+animation:fadeOut .5s forwards;
+}
+
+@keyframes fadeOut{
+to{opacity:0}
+}
+
+/* Mobile */
+@media(max-width:768px){
+.platform-card{
+width:150px;
+height:220px;
+font-size:16px;
+}
+.logo h1{font-size:28px}
+}
+</style>
+</head>
+
+<body>
+
+<div class="logo">
+<img src="https://i.imgur.com/MC7KXb2.png">
+<h1>Koroi Drama</h1>
+</div>
+
+<div class="tagline">
+Choose Your Platform
+</div>
+
+<div class="platforms">
+
+<div class="platform-card" onclick="go('dramabox.html')" style="background:#1a1a21">
+<div class="platform-title">DramaBox</div>
+</div>
+
+<div class="platform-card" onclick="go('netshort.html')" style="background:#151522">
+<div class="platform-title">NetShort</div>
+</div>
+
+<div class="platform-card" onclick="go('reelshort.html')" style="background:#1c1111">
+<div class="platform-title">ReelShort</div>
+</div>
+
+</div>
+
+<script>
+function go(page){
+document.body.classList.add("fade-out");
+setTimeout(()=>{
+window.location.href = page;
+},400);
+}
+</script>
+
+</body>
+</html>
