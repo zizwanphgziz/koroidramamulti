@@ -159,12 +159,42 @@ Choose Your Platform
 </div>
 
 <script>
+
+/* 🔒 GLOBAL ACCESS LOCK */
+const ACCESS_KEY = "koroi2026";
+
+function checkAccess(){
+const params = new URLSearchParams(window.location.search);
+const key = params.get("access");
+
+if(key !== ACCESS_KEY){
+document.body.innerHTML = `
+<div style="
+height:100vh;
+display:flex;
+align-items:center;
+justify-content:center;
+background:#000;
+color:white;
+font-family:Poppins;
+">
+<h2>Access Denied</h2>
+</div>
+`;
+throw new Error("Invalid Access Key");
+}
+}
+
+checkAccess();
+
+/* Platform Navigation */
 function go(page){
 document.body.classList.add("fade-out");
 setTimeout(()=>{
-window.location.href = page;
+window.location.href = page + "?access=" + ACCESS_KEY;
 },400);
 }
+
 </script>
 
 </body>
