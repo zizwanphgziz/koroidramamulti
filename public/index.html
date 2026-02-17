@@ -72,11 +72,10 @@ letter-spacing:1px;
 
 .platforms{
 display:flex;
-gap:30px;
+gap:25px;
 overflow-x:auto;
-scroll-behavior:smooth;
-padding:0 20px;
-width:100%;
+scroll-snap-type:x mandatory;
+padding:10px 20px;
 }
 
 .platforms::-webkit-scrollbar{
@@ -97,6 +96,7 @@ justify-content:center;
 padding-bottom:20px;
 background-size:cover;
 background-position:center;
+scroll-snap-align:center;
 flex:0 0 auto;
 }
 
@@ -209,6 +209,23 @@ window.location.href = page + "?access=" + ACCESS_KEY;
 }
 
 </script>
+
+/* ===== MOBILE FIX ONLY ===== */
+@media(max-width:768px){
+
+body{
+justify-content:flex-start;
+padding-top:60px;
+height:auto;
+min-height:100vh;
+overflow-x:hidden;
+}
+
+.platforms{
+margin-top:40px;
+}
+
+}
 
 </body>
 </html>
