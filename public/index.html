@@ -213,11 +213,14 @@ font-family:Poppins;
 <h2>Access Denied</h2>
 </div>
 `;
-throw new Error("Invalid Access Key");
+return false;
 }
+return true;
 }
 
-checkAccess();
+if(!checkAccess()) {
+  // stop further execution
+} 
 
 /* Platform Navigation */
 function go(page){
