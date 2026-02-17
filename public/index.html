@@ -21,14 +21,14 @@ font-family:Poppins;
 background:var(--bg);
 color:white;
 overflow:hidden;
-height:100vh;
 display:flex;
 flex-direction:column;
 align-items:center;
 justify-content:center;
+height:100vh;
 }
 
-/* Animated Background */
+/* Background */
 body::before{
 content:"";
 position:fixed;
@@ -64,80 +64,92 @@ background:linear-gradient(90deg,#ff3d3d,#ff0000,#ff5c5c);
 .tagline{
 font-size:14px;
 opacity:.7;
-margin-bottom:60px;
+margin-bottom:50px;
 letter-spacing:1px;
 }
 
-/* ===== INFINITE CAROUSEL ===== */
+/* ===== CAROUSEL WRAPPER ===== */
 
 .slider-wrapper{
-width:100%;
-overflow:hidden;
 position:relative;
+width:100%;
+max-width:1200px;
+overflow:hidden;
 }
 
 .tab-list{
 display:flex;
-gap:40px;
+gap:25px;
 overflow-x:scroll;
 scroll-behavior:auto;
-padding:0 40px;
+padding:20px 0;
 }
 
 .tab-list::-webkit-scrollbar{
 display:none;
 }
 
-.tab-item{
-min-width:260px;
-height:360px;
-border-radius:20px;
+.platform-card{
+width:220px;
+height:320px;
+border-radius:16px;
+cursor:pointer;
+position:relative;
+transition:all .4s ease;
 display:flex;
 align-items:flex-end;
 justify-content:center;
-padding-bottom:25px;
+padding-bottom:20px;
 background-size:cover;
 background-position:center;
-position:relative;
-flex-shrink:0;
-cursor:pointer;
-transition:transform .3s ease;
+flex:0 0 auto;
 }
 
-.tab-item:hover{
+.platform-card:hover{
 transform:scale(1.05);
 box-shadow:0 0 40px rgba(229,9,20,.5);
 }
 
-.tab-item::after{
+.platform-card::after{
 content:"";
 position:absolute;
 inset:0;
 background:linear-gradient(to top,rgba(0,0,0,.85),rgba(0,0,0,.2));
-border-radius:20px;
+border-radius:16px;
 }
 
-.tab-item span{
+.platform-title{
 position:relative;
 z-index:2;
 font-size:20px;
 font-weight:700;
 }
 
-/* Platform Backgrounds */
+/* Background Images */
 .dramabox-bg{
 background:url('https://captain.sapimu.au/logos/dramabox.png') center/cover no-repeat;
 }
 
-.netshort-bg{
-background:#151522;
+/* Arrows */
+.arrow{
+position:absolute;
+top:50%;
+transform:translateY(-50%);
+background:rgba(0,0,0,.6);
+border:none;
+color:white;
+font-size:28px;
+width:50px;
+height:50px;
+border-radius:50%;
+cursor:pointer;
+z-index:10;
 }
 
-.reelshort-bg{
-background:#1c1111;
-}
+.arrow-left{left:0}
+.arrow-right{right:0}
 
-/* Fade Animation */
+/* Fade */
 .fade-out{
 animation:fadeOut .4s forwards;
 }
@@ -146,16 +158,24 @@ animation:fadeOut .4s forwards;
 to{opacity:0}
 }
 
-/* ===== MOBILE ===== */
-
+/* Mobile */
 @media(max-width:768px){
 
-.tab-item{
-min-width:200px;
-height:260px;
+body{
+justify-content:flex-start;
+padding-top:60px;
 }
 
 .logo h1{font-size:28px}
+
+.platform-card{
+width:150px;
+height:220px;
+}
+
+.arrow{
+display:none;
+}
 
 }
 
@@ -174,93 +194,88 @@ Choose Your Platform
 </div>
 
 <div class="slider-wrapper">
-  <div class="tab-list" id="tabList">
 
-    <div class="tab-item dramabox-bg" onclick="go('dramabox.html')">
-      <span>DramaBox</span>
-    </div>
+<button class="arrow arrow-left" onclick="scrollLeftBtn()">‹</button>
+<button class="arrow arrow-right" onclick="scrollRightBtn()">›</button>
 
-    <div class="tab-item netshort-bg" onclick="go('netshort.html')">
-      <span>NetShort</span>
-    </div>
+<div class="tab-list" id="tabList">
 
-    <div class="tab-item reelshort-bg" onclick="go('reelshort.html')">
-      <span>ReelShort</span>
-    </div>
+<div class="platform-card dramabox-bg" onclick="go('dramabox.html')">
+<div class="platform-title">DramaBox</div>
+</div>
 
-  </div>
+<div class="platform-card" onclick="go('netshort.html')" style="background:#151522">
+<div class="platform-title">NetShort</div>
+</div>
+
+<div class="platform-card" onclick="go('reelshort.html')" style="background:#1c1111">
+<div class="platform-title">ReelShort</div>
+</div>
+
+</div>
 </div>
 
 <script>
 
-/* 🔒 GLOBAL ACCESS LOCK */
-const ACCESS_KEY = "koroi2026";
+/* ACCESS LOCK */
+const ACCESS_KEY="koroi2026";
 
 function checkAccess(){
-const params = new URLSearchParams(window.location.search);
-const key = params.get("access");
-
-if(key !== ACCESS_KEY){
-document.body.innerHTML = `
-<div style="
-height:100vh;
-display:flex;
-align-items:center;
-justify-content:center;
-background:#000;
-color:white;
-font-family:Poppins;
-">
-<h2>Access Denied</h2>
-</div>
-`;
-return false;
+const params=new URLSearchParams(window.location.search);
+if(params.get("access")!==ACCESS_KEY){
+document.body.innerHTML="<h2 style='color:white;background:black;height:100vh;display:flex;align-items:center;justify-content:center'>Access Denied</h2>";
+throw new Error("Access Denied");
 }
-return true;
 }
+checkAccess();
 
-if(!checkAccess()) throw new Error("Access denied");
-
-/* Platform Navigation */
+/* Navigation */
 function go(page){
 document.body.classList.add("fade-out");
 setTimeout(()=>{
-window.location.href = page + "?access=" + ACCESS_KEY;
+window.location.href=page+"?access="+ACCESS_KEY;
 },400);
 }
 
 /* ===== TRUE INFINITE ENGINE ===== */
 
-const tabList = document.getElementById("tabList");
-let items = [...tabList.children];
+const tabList=document.getElementById("tabList");
 
-// Clone original set to beginning & end
-items.forEach(item=>{
+// Clone once
+const originalItems=[...tabList.children];
+originalItems.forEach(item=>{
 tabList.appendChild(item.cloneNode(true));
 });
-items.forEach(item=>{
-tabList.insertBefore(item.cloneNode(true), tabList.firstChild);
-});
 
-const gap = 40;
-const itemWidth = items[0].offsetWidth + gap;
-const originalWidth = itemWidth * items.length;
+setTimeout(()=>{
 
-// Start in middle
-tabList.scrollLeft = originalWidth;
+const halfWidth=tabList.scrollWidth/2;
 
-// Infinite teleport logic
+// Start middle
+tabList.scrollLeft=halfWidth;
+
 tabList.addEventListener("scroll",()=>{
 
-if(tabList.scrollLeft <= 0){
-tabList.scrollLeft = originalWidth;
+if(tabList.scrollLeft<=0){
+tabList.scrollLeft=halfWidth;
 }
 
-if(tabList.scrollLeft >= originalWidth * 2){
-tabList.scrollLeft = originalWidth;
+if(tabList.scrollLeft>=halfWidth*2){
+tabList.scrollLeft=halfWidth;
 }
 
 });
+
+},100);
+
+/* Arrow controls */
+function scrollLeftBtn(){
+tabList.scrollBy({left:-300,behavior:"smooth"});
+}
+
+function scrollRightBtn(){
+tabList.scrollBy({left:300,behavior:"smooth"});
+}
 
 </script>
 
