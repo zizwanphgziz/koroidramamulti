@@ -453,22 +453,42 @@ playEpisode(ep,savedTime);
 }
 
 async function playEpisode(index,savedTime=0){
+
 currentEpisode=index;
+
 const watch=await apiCall(`/dramabox/api/v1/watch/${currentDrama}/${index}`);
 const player=document.getElementById("player");
-player.src=watch.data.videoUrl;
-player.play();
 
+player.pause();
+player.src="";
+player.load();
+
+player.src=watch.data.videoUrl;
+
+/* IMPORTANT FIX */
+player.onloadedmetadata=()=>{
+
+if(savedTime>0 && savedTime < player.duration){
+player.currentTime=savedTime;
+}
+
+/* Play only after time set */
+player.play().catch(()=>{});
+};
+
+/* highlight */
 document.querySelectorAll(".ep-btn").forEach(btn=>btn.classList.remove("playing"));
 const active=document.querySelector(`.ep-btn[data-index="${index}"]`);
 if(active) active.classList.add("playing");
 
+/* autoplay */
 player.onended=()=>{
 if(document.getElementById("autoplayToggle").checked && index+1<totalEpisodes){
 playEpisode(index+1,0);
 }
 };
 
+/* save progress */
 player.ontimeupdate=()=>{
 if(player.duration){
 saveContinue({
