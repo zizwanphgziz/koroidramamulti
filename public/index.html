@@ -21,14 +21,14 @@ font-family:Poppins;
 background:var(--bg);
 color:white;
 overflow:hidden;
+height:100vh;
 display:flex;
 flex-direction:column;
 align-items:center;
 justify-content:center;
-height:100vh;
 }
 
-/* Background */
+/* Animated Background */
 body::before{
 content:"";
 position:fixed;
@@ -64,123 +64,101 @@ background:linear-gradient(90deg,#ff3d3d,#ff0000,#ff5c5c);
 .tagline{
 font-size:14px;
 opacity:.7;
-margin-bottom:40px;
+margin-bottom:60px;
+letter-spacing:1px;
 }
 
-/* ===== CAROUSEL ===== */
+/* ===== INFINITE CAROUSEL ===== */
 
-.carousel-wrapper{
-position:relative;
+.slider-wrapper{
 width:100%;
-max-width:1200px;
 overflow:hidden;
-}
-
-.carousel{
-display:flex;
-align-items:center;
-justify-content:center;
 position:relative;
 }
 
-.platform-card{
-position:absolute;
-width:240px;
-height:340px;
-border-radius:18px;
-overflow:hidden;
-cursor:pointer;
+.tab-list{
+display:flex;
+gap:40px;
+overflow-x:scroll;
+scroll-behavior:auto;
+padding:0 40px;
+}
+
+.tab-list::-webkit-scrollbar{
+display:none;
+}
+
+.tab-item{
+min-width:260px;
+height:360px;
+border-radius:20px;
 display:flex;
 align-items:flex-end;
 justify-content:center;
 padding-bottom:25px;
 background-size:cover;
 background-position:center;
-transition:all .5s ease;
+position:relative;
+flex-shrink:0;
+cursor:pointer;
+transition:transform .3s ease;
 }
 
-.platform-card::after{
+.tab-item:hover{
+transform:scale(1.05);
+box-shadow:0 0 40px rgba(229,9,20,.5);
+}
+
+.tab-item::after{
 content:"";
 position:absolute;
 inset:0;
 background:linear-gradient(to top,rgba(0,0,0,.85),rgba(0,0,0,.2));
+border-radius:20px;
 }
 
-.platform-title{
+.tab-item span{
 position:relative;
 z-index:2;
-font-size:22px;
+font-size:20px;
 font-weight:700;
 }
 
-/* depth positions */
-.platform-card.center{
-transform:translateX(0) scale(1.15);
-opacity:1;
-z-index:3;
-}
-
-.platform-card.left{
-transform:translateX(-300px) scale(.85);
-opacity:.5;
-z-index:2;
-}
-
-.platform-card.right{
-transform:translateX(300px) scale(.85);
-opacity:.5;
-z-index:2;
-}
-
-/* Arrows */
-.arrow{
-position:absolute;
-top:50%;
-transform:translateY(-50%);
-background:rgba(0,0,0,.6);
-border:none;
-color:white;
-width:45px;
-height:45px;
-border-radius:50%;
-cursor:pointer;
-font-size:20px;
-z-index:10;
-}
-
-.arrow:hover{background:var(--red)}
-.arrow.left{left:50px}
-.arrow.right{right:50px}
-
-/* Background images */
+/* Platform Backgrounds */
 .dramabox-bg{
 background:url('https://captain.sapimu.au/logos/dramabox.png') center/cover no-repeat;
 }
-.netshort-bg{background:#151522;}
-.reelshort-bg{background:#1c1111;}
 
-.fade-out{
-animation:fadeOut .5s forwards;
+.netshort-bg{
+background:#151522;
 }
-@keyframes fadeOut{to{opacity:0}}
+
+.reelshort-bg{
+background:#1c1111;
+}
+
+/* Fade Animation */
+.fade-out{
+animation:fadeOut .4s forwards;
+}
+
+@keyframes fadeOut{
+to{opacity:0}
+}
+
+/* ===== MOBILE ===== */
 
 @media(max-width:768px){
 
-body{
-justify-content:flex-start;
-padding-top:60px;
+.tab-item{
+min-width:200px;
+height:260px;
 }
 
 .logo h1{font-size:28px}
 
-.platform-card{
-width:180px;
-height:260px;
 }
 
-.arrow{display:none}
-
-}
 </style>
 </head>
 
@@ -191,95 +169,98 @@ height:260px;
 <h1>Koroi Drama</h1>
 </div>
 
-<div class="tagline">Choose Your Platform</div>
-
-<div class="carousel-wrapper">
-
-<button class="arrow left" onclick="prev()">‹</button>
-
-<div class="carousel" id="carousel">
-
-<div class="platform-card dramabox-bg" onclick="go('dramabox.html')">
-<div class="platform-title">DramaBox</div>
+<div class="tagline">
+Choose Your Platform
 </div>
 
-<div class="platform-card netshort-bg" onclick="go('netshort.html')">
-<div class="platform-title">NetShort</div>
-</div>
+<div class="slider-wrapper">
+  <div class="tab-list" id="tabList">
 
-<div class="platform-card reelshort-bg" onclick="go('reelshort.html')">
-<div class="platform-title">ReelShort</div>
-</div>
+    <div class="tab-item dramabox-bg" onclick="go('dramabox.html')">
+      <span>DramaBox</span>
+    </div>
 
-</div>
+    <div class="tab-item netshort-bg" onclick="go('netshort.html')">
+      <span>NetShort</span>
+    </div>
 
-<button class="arrow right" onclick="next()">›</button>
+    <div class="tab-item reelshort-bg" onclick="go('reelshort.html')">
+      <span>ReelShort</span>
+    </div>
 
+  </div>
 </div>
 
 <script>
 
-/* ACCESS LOCK */
-const ACCESS_KEY="koroi2026";
-if(new URLSearchParams(window.location.search).get("access")!==ACCESS_KEY){
-document.body.innerHTML="<h2 style='color:white;text-align:center;margin-top:40vh'>Access Denied</h2>";
-throw new Error("Access Denied");
+/* 🔒 GLOBAL ACCESS LOCK */
+const ACCESS_KEY = "koroi2026";
+
+function checkAccess(){
+const params = new URLSearchParams(window.location.search);
+const key = params.get("access");
+
+if(key !== ACCESS_KEY){
+document.body.innerHTML = `
+<div style="
+height:100vh;
+display:flex;
+align-items:center;
+justify-content:center;
+background:#000;
+color:white;
+font-family:Poppins;
+">
+<h2>Access Denied</h2>
+</div>
+`;
+return false;
+}
+return true;
 }
 
-/* TRUE INFINITE ROTATION ENGINE */
+if(!checkAccess()) throw new Error("Access denied");
 
-const cards=[...document.querySelectorAll(".platform-card")];
-let index=0;
-
-function updateCarousel(){
-cards.forEach((card,i)=>{
-card.classList.remove("left","center","right");
-
-if(i===index){
-card.classList.add("center");
-}
-else if(i===(index-1+cards.length)%cards.length){
-card.classList.add("left");
-}
-else if(i===(index+1)%cards.length){
-card.classList.add("right");
-}
-else{
-card.style.opacity=0;
-}
-});
-}
-
-function next(){
-index=(index+1)%cards.length;
-updateCarousel();
-}
-
-function prev(){
-index=(index-1+cards.length)%cards.length;
-updateCarousel();
-}
-
-/* Mobile swipe */
-let startX=0;
-document.addEventListener("touchstart",e=>{
-startX=e.touches[0].clientX;
-});
-document.addEventListener("touchend",e=>{
-let diff=e.changedTouches[0].clientX-startX;
-if(diff>50) prev();
-if(diff<-50) next();
-});
-
-updateCarousel();
-
-/* Navigation */
+/* Platform Navigation */
 function go(page){
 document.body.classList.add("fade-out");
 setTimeout(()=>{
-window.location.href=page+"?access="+ACCESS_KEY;
+window.location.href = page + "?access=" + ACCESS_KEY;
 },400);
 }
+
+/* ===== TRUE INFINITE ENGINE ===== */
+
+const tabList = document.getElementById("tabList");
+let items = [...tabList.children];
+
+// Clone original set to beginning & end
+items.forEach(item=>{
+tabList.appendChild(item.cloneNode(true));
+});
+items.forEach(item=>{
+tabList.insertBefore(item.cloneNode(true), tabList.firstChild);
+});
+
+const gap = 40;
+const itemWidth = items[0].offsetWidth + gap;
+const originalWidth = itemWidth * items.length;
+
+// Start in middle
+tabList.scrollLeft = originalWidth;
+
+// Infinite teleport logic
+tabList.addEventListener("scroll",()=>{
+
+if(tabList.scrollLeft <= 0){
+tabList.scrollLeft = originalWidth;
+}
+
+if(tabList.scrollLeft >= originalWidth * 2){
+tabList.scrollLeft = originalWidth;
+}
+
+});
 
 </script>
 
