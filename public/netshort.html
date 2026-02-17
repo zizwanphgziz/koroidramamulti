@@ -7,7 +7,6 @@
 <link rel="icon" href="data:,">
 
 <style>
-/* SAME STABLE CORE STYLE - NO CHANGE */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap');
 
 :root{
@@ -17,6 +16,7 @@
 }
 
 *{box-sizing:border-box}
+
 body{
 margin:0;
 font-family:Poppins;
@@ -25,6 +25,7 @@ color:white;
 overflow-x:hidden;
 }
 
+/* HEADER */
 header{
 display:flex;
 align-items:center;
@@ -88,6 +89,7 @@ max-width:600px;
 z-index:2;
 }
 
+/* SECTION */
 .section{
 padding:30px 5%;
 }
@@ -101,6 +103,7 @@ scroll-behavior:smooth;
 
 .scroll-row::-webkit-scrollbar{display:none}
 
+/* CARD */
 .card{
 min-width:170px;
 max-width:170px;
@@ -128,7 +131,11 @@ display:-webkit-box;
 overflow:hidden;
 }
 
-.details{display:none;padding:30px 5%}
+/* DETAILS */
+.details{
+display:none;
+padding:30px 5%;
+}
 
 .video-wrap{
 max-width:900px;
@@ -202,6 +209,35 @@ font-weight:600;
 
 <script>
 
+/* 🔒 ACCESS LOCK */
+const ACCESS_KEY = "koroi2026";
+
+function checkAccess(){
+const params = new URLSearchParams(window.location.search);
+const key = params.get("access");
+
+if(key !== ACCESS_KEY){
+document.body.innerHTML = `
+<div style="
+height:100vh;
+display:flex;
+align-items:center;
+justify-content:center;
+background:#000;
+color:white;
+font-family:Poppins;
+">
+<h2>Access Denied</h2>
+</div>
+`;
+throw new Error("Invalid Access Key");
+}
+}
+
+checkAccess();
+
+/* ================= ENGINE ================= */
+
 const API="/api/proxy";
 
 function showPage(page){
@@ -225,12 +261,14 @@ document.getElementById("heroBtn").onclick=()=>openDetails(hero.id);
 
 const heroVideo=document.getElementById("heroVideo");
 const firstEp=await apiCall(`/api/v1/episode/${hero.id}/1`);
+
 if(firstEp?.data?.videoUrl){
 heroVideo.src=firstEp.data.videoUrl;
 }
 
 const row=document.getElementById("feedRow");
 row.innerHTML="";
+
 list.forEach(item=>{
 const card=document.createElement("div");
 card.className="card";
@@ -268,14 +306,16 @@ player.src=watch.data.videoUrl;
 player.play();
 
 document.querySelectorAll(".ep-btn").forEach(b=>b.classList.remove("playing"));
+
 const active=[...document.querySelectorAll(".ep-btn")]
 .find(b=>b.textContent==epNo);
+
 if(active) active.classList.add("playing");
 }
 
 function goHome(){
 document.getElementById("player").pause();
-showPage("home");
+window.location.href="index.html?access="+ACCESS_KEY;
 }
 
 loadFeed();
