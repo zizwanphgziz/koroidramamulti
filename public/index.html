@@ -14,21 +14,28 @@
 --bg:#0b0b0f;
 }
 
-*{box-sizing:border-box;margin:0;padding:0}
+*{
+box-sizing:border-box;
+margin:0;
+padding:0;
+}
+
+html,body{
+height:100%;
+overflow:hidden;
+}
 
 body{
 font-family:Poppins;
 background:var(--bg);
 color:white;
-overflow:hidden;
 display:flex;
 flex-direction:column;
 align-items:center;
 justify-content:center;
-height:100vh;
 }
 
-/* Animated background logo */
+/* Animated Background */
 body::before{
 content:"";
 position:fixed;
@@ -44,6 +51,17 @@ from{transform:rotate(0deg)}
 to{transform:rotate(360deg)}
 }
 
+/* Entrance animation */
+body{
+animation:fadeIn .6s ease forwards;
+}
+
+@keyframes fadeIn{
+from{opacity:0; transform:translateY(10px);}
+to{opacity:1; transform:translateY(0);}
+}
+
+/* Logo */
 .logo{
 display:flex;
 align-items:center;
@@ -70,31 +88,38 @@ margin-bottom:50px;
 letter-spacing:1px;
 }
 
+/* PLATFORM CONTAINER */
+.platform-wrapper{
+width:100%;
+overflow:hidden;
+}
+
 .platforms{
 display:flex;
-gap:25px;
+gap:30px;
 overflow-x:auto;
 scroll-snap-type:x mandatory;
-scroll-padding:50%;
-padding:20px 50vw;
+scroll-behavior:smooth;
+padding:0 calc(50vw - 110px); /* center snapping */
 }
 
 .platforms::-webkit-scrollbar{
 display:none;
 }
 
+/* PLATFORM CARD */
 .platform-card{
 width:220px;
 height:320px;
-border-radius:16px;
-overflow-x:hidden;
+border-radius:20px;
+overflow:hidden;
 cursor:pointer;
 position:relative;
-transition:all .4s ease;
+transition:.4s ease;
 display:flex;
 align-items:flex-end;
 justify-content:center;
-padding-bottom:20px;
+padding-bottom:25px;
 background-size:cover;
 background-position:center;
 scroll-snap-align:center;
@@ -102,21 +127,21 @@ flex:0 0 auto;
 }
 
 .platform-card:hover{
-transform:scale(1.05);
-box-shadow:0 0 40px rgba(229,9,20,.5);
+transform:scale(1.06);
+box-shadow:0 0 45px rgba(229,9,20,.5);
 }
 
 .platform-card::after{
 content:"";
 position:absolute;
 inset:0;
-background:linear-gradient(to top,rgba(0,0,0,.85),rgba(0,0,0,.2));
+background:linear-gradient(to top,rgba(0,0,0,.9),rgba(0,0,0,.2));
 }
 
+/* Platform specific background */
 .dramabox-bg{
 background:url('https://captain.sapimu.au/logos/dramabox.png') center/cover no-repeat;
 }
-
 
 .platform-title{
 position:relative;
@@ -125,43 +150,32 @@ font-size:20px;
 font-weight:700;
 }
 
+/* Fade out animation */
 .fade-out{
-animation:fadeOut .5s forwards;
+animation:fadeOut .4s forwards;
 }
 
 @keyframes fadeOut{
-to{opacity:0}
+to{opacity:0; transform:scale(.98);}
 }
 
-/* Mobile */
+/* MOBILE */
 @media(max-width:768px){
-
-.platform-card{
-width:150px;
-height:220px;
-font-size:16px;
-}
 
 .logo h1{
 font-size:28px;
 }
 
-/* ===== MOBILE FIX ONLY ===== */
-body{
-justify-content:flex-start;
-padding-top:60px;
-height:auto;
-min-height:100vh;
-overflow-x:hidden;
-overflow-y:auto;
+.platform-card{
+width:170px;
+height:250px;
 }
 
 .platforms{
-margin-top:40px;
+padding:0 calc(50vw - 85px); /* re-center for smaller card */
 }
 
 }
-
 </style>
 </head>
 
@@ -176,6 +190,7 @@ margin-top:40px;
 Choose Your Platform
 </div>
 
+<div class="platform-wrapper">
 <div class="platforms">
 
 <div class="platform-card dramabox-bg" onclick="go('dramabox.html')">
@@ -190,6 +205,7 @@ Choose Your Platform
 <div class="platform-title">ReelShort</div>
 </div>
 
+</div>
 </div>
 
 <script>
@@ -220,16 +236,14 @@ return false;
 return true;
 }
 
-if(!checkAccess()) {
-  // stop further execution
-} 
+if(!checkAccess()) throw new Error("Access Blocked");
 
-/* Platform Navigation */
+/* Navigation */
 function go(page){
 document.body.classList.add("fade-out");
 setTimeout(()=>{
 window.location.href = page + "?access=" + ACCESS_KEY;
-},400);
+},350);
 }
 
 </script>
