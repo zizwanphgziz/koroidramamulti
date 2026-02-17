@@ -14,21 +14,24 @@
 --bg:#0b0b0f;
 }
 
-*{box-sizing:border-box;margin:0;padding:0}
+*{
+box-sizing:border-box;
+margin:0;
+padding:0;
+}
 
 body{
 font-family:Poppins;
 background:var(--bg);
 color:white;
-overflow:hidden;
+height:100vh;
+overflow:hidden; /* page static */
 display:flex;
 flex-direction:column;
 align-items:center;
-justify-content:center;
-height:100vh;
 }
 
-/* Background animation */
+/* Animated background */
 body::before{
 content:"";
 position:fixed;
@@ -38,22 +41,28 @@ opacity:.04;
 animation:spin 120s linear infinite;
 z-index:-1;
 }
+
 @keyframes spin{
 from{transform:rotate(0deg)}
 to{transform:rotate(360deg)}
 }
 
-.logo{
+/* HEADER AREA */
+.header{
+margin-top:40px;
 display:flex;
+flex-direction:column;
 align-items:center;
-gap:15px;
+text-align:center;
+}
+
+.header img{
+width:100px;
 margin-bottom:15px;
 }
 
-.logo img{width:90px}
-
-.logo h1{
-font-size:36px;
+.header h1{
+font-size:38px;
 font-weight:800;
 background:linear-gradient(90deg,#ff3d3d,#ff0000,#ff5c5c);
 -webkit-background-clip:text;
@@ -61,76 +70,55 @@ background:linear-gradient(90deg,#ff3d3d,#ff0000,#ff5c5c);
 }
 
 .tagline{
+margin-top:10px;
+opacity:.6;
 font-size:14px;
-opacity:.7;
-margin-bottom:40px;
 letter-spacing:1px;
 }
 
-/* Wrapper */
-.slider-wrapper{
-position:relative;
+/* PLATFORM SCROLL AREA */
+.platform-wrapper{
+flex:1;
 width:100%;
-max-width:1000px;
-overflow:hidden;
-}
-
-/* Arrows (Laptop only) */
-.arrow{
-position:absolute;
-top:50%;
-transform:translateY(-50%);
-width:45px;
-height:45px;
-border-radius:50%;
-background:rgba(0,0,0,.6);
 display:flex;
-align-items:center;
 justify-content:center;
-cursor:pointer;
-font-size:20px;
-z-index:10;
-transition:.3s;
+overflow:hidden;
+margin-top:40px;
 }
-.arrow:hover{
-background:var(--red);
-}
-.arrow.left{left:0}
-.arrow.right{right:0}
 
-/* Platforms Track */
 .platforms{
+width:100%;
+max-width:420px;
+overflow-y:auto;
+padding:0 20px 40px 20px;
 display:flex;
+flex-direction:column;
 gap:25px;
-overflow-x:auto;
-scroll-snap-type:x mandatory;
 scroll-behavior:smooth;
-padding:20px 50px;
 }
 
-.platforms::-webkit-scrollbar{display:none}
+/* hide scrollbar */
+.platforms::-webkit-scrollbar{
+width:0;
+}
 
 .platform-card{
-width:220px;
-height:320px;
-border-radius:16px;
-overflow:hidden;
+height:260px;
+border-radius:18px;
 cursor:pointer;
 position:relative;
-transition:.4s;
 display:flex;
 align-items:flex-end;
 justify-content:center;
-padding-bottom:20px;
+padding-bottom:25px;
 background-size:cover;
 background-position:center;
-scroll-snap-align:center;
-flex:0 0 auto;
+transition:all .3s ease;
 }
 
 .platform-card:hover{
-transform:scale(1.05);
-box-shadow:0 0 40px rgba(229,9,20,.5);
+transform:scale(1.03);
+box-shadow:0 0 30px rgba(229,9,20,.4);
 }
 
 .platform-card::after{
@@ -138,139 +126,104 @@ content:"";
 position:absolute;
 inset:0;
 background:linear-gradient(to top,rgba(0,0,0,.85),rgba(0,0,0,.2));
+border-radius:18px;
 }
 
 .platform-title{
 position:relative;
 z-index:2;
-font-size:20px;
+font-size:22px;
 font-weight:700;
 }
 
+/* backgrounds */
 .dramabox-bg{
 background:url('https://captain.sapimu.au/logos/dramabox.png') center/cover no-repeat;
 }
 
-/* Fade animation */
-.fade-out{
-animation:fadeOut .4s forwards;
-}
-@keyframes fadeOut{
-to{opacity:0}
+.netshort-bg{
+background:#151522;
 }
 
-/* Mobile */
+.reelshort-bg{
+background:#1c1111;
+}
+
+/* Mobile scaling */
 @media(max-width:768px){
-body{
-justify-content:flex-start;
-padding-top:60px;
+.header img{
+width:85px;
 }
-
+.header h1{
+font-size:30px;
+}
 .platform-card{
-width:150px;
-height:220px;
+height:200px;
+}
 }
 
-.logo h1{font-size:28px}
-
-.arrow{display:none}
-}
 </style>
 </head>
 
 <body>
 
-<div class="logo">
+<div class="header">
 <img src="https://i.imgur.com/MC7KXb2.png">
 <h1>Koroi Drama</h1>
+<div class="tagline">Choose Your Platform</div>
 </div>
 
-<div class="tagline">Choose Your Platform</div>
-
-<div class="slider-wrapper">
-
-<div class="arrow left" onclick="scrollLeftBtn()">‹</div>
-
-<div class="platforms" id="tabList">
+<div class="platform-wrapper">
+<div class="platforms">
 
 <div class="platform-card dramabox-bg" onclick="go('dramabox.html')">
 <div class="platform-title">DramaBox</div>
 </div>
 
-<div class="platform-card" onclick="go('netshort.html')" style="background:#151522">
+<div class="platform-card netshort-bg" onclick="go('netshort.html')">
 <div class="platform-title">NetShort</div>
 </div>
 
-<div class="platform-card" onclick="go('reelshort.html')" style="background:#1c1111">
+<div class="platform-card reelshort-bg" onclick="go('reelshort.html')">
 <div class="platform-title">ReelShort</div>
 </div>
 
 </div>
-
-<div class="arrow right" onclick="scrollRightBtn()">›</div>
-
 </div>
 
 <script>
 
-/* 🔒 ACCESS LOCK */
-const ACCESS_KEY="koroi2026";
+/* 🔒 GLOBAL ACCESS LOCK */
+const ACCESS_KEY = "koroi2026";
 
 function checkAccess(){
-const params=new URLSearchParams(window.location.search);
-if(params.get("access")!==ACCESS_KEY){
-document.body.innerHTML="<h2 style='color:white;background:black;height:100vh;display:flex;align-items:center;justify-content:center'>Access Denied</h2>";
-throw new Error("Access Denied");
+const params = new URLSearchParams(window.location.search);
+const key = params.get("access");
+
+if(key !== ACCESS_KEY){
+document.body.innerHTML = `
+<div style="
+height:100vh;
+display:flex;
+align-items:center;
+justify-content:center;
+background:#000;
+color:white;
+font-family:Poppins;
+">
+<h2>Access Denied</h2>
+</div>
+`;
+return false;
 }
+return true;
 }
-checkAccess();
+
+if(!checkAccess()) return;
 
 /* Navigation */
 function go(page){
-document.body.classList.add("fade-out");
-setTimeout(()=>{
-window.location.href=page+"?access="+ACCESS_KEY;
-},400);
-}
-
-/* ===== TRUE PERFECT INFINITE ENGINE ===== */
-
-const tabList=document.getElementById("tabList");
-
-// Clone once
-const originals=[...tabList.children];
-originals.forEach(item=>{
-tabList.appendChild(item.cloneNode(true));
-});
-
-window.addEventListener("load",()=>{
-
-const originalWidth = tabList.scrollWidth / 2;
-
-// Start in middle
-tabList.scrollLeft = originalWidth;
-
-tabList.addEventListener("scroll",()=>{
-
-if(tabList.scrollLeft <= 0){
-tabList.scrollLeft = originalWidth;
-}
-
-if(tabList.scrollLeft >= originalWidth * 2){
-tabList.scrollLeft = originalWidth;
-}
-
-});
-
-});
-
-/* Arrow controls */
-function scrollLeftBtn(){
-tabList.scrollBy({left:-300,behavior:"smooth"});
-}
-
-function scrollRightBtn(){
-tabList.scrollBy({left:300,behavior:"smooth"});
+window.location.href = page + "?access=" + ACCESS_KEY;
 }
 
 </script>
