@@ -28,7 +28,7 @@ justify-content:center;
 height:100vh;
 }
 
-/* Background */
+/* Animated Background */
 body::before{
 content:"";
 position:fixed;
@@ -44,7 +44,6 @@ from{transform:rotate(0deg)}
 to{transform:rotate(360deg)}
 }
 
-/* Logo */
 .logo{
 display:flex;
 align-items:center;
@@ -69,45 +68,42 @@ margin-bottom:40px;
 letter-spacing:1px;
 }
 
-/* Wrapper */
-.platform-wrapper{
+/* ===== CAROUSEL ===== */
+
+.carousel-wrapper{
 position:relative;
 width:100%;
+max-width:1200px;
 overflow:hidden;
 }
 
-/* Carousel */
 .platforms{
 display:flex;
 gap:30px;
 overflow-x:auto;
-scroll-snap-type:x mandatory;
 scroll-behavior:smooth;
-padding:20px 50vw;
+padding:40px 0;
+scroll-snap-type:x mandatory;
 }
 
 .platforms::-webkit-scrollbar{display:none}
 
 .platform-card{
-width:220px;
-height:320px;
-border-radius:20px;
+width:240px;
+height:340px;
+border-radius:18px;
+overflow:hidden;
 cursor:pointer;
 position:relative;
-transition:.4s ease;
+flex:0 0 auto;
+scroll-snap-align:center;
 display:flex;
 align-items:flex-end;
 justify-content:center;
 padding-bottom:25px;
 background-size:cover;
 background-position:center;
-scroll-snap-align:center;
-flex:0 0 auto;
-}
-
-.platform-card:hover{
-transform:scale(1.05);
-box-shadow:0 0 50px rgba(229,9,20,.6);
+transition:transform .4s ease, opacity .4s ease;
 }
 
 .platform-card::after{
@@ -115,64 +111,89 @@ content:"";
 position:absolute;
 inset:0;
 background:linear-gradient(to top,rgba(0,0,0,.85),rgba(0,0,0,.2));
-border-radius:20px;
 }
 
 .platform-title{
 position:relative;
 z-index:2;
-font-size:20px;
+font-size:22px;
 font-weight:700;
 }
 
-/* Platform BG */
-.dramabox-bg{
-background:url('https://captain.sapimu.au/logos/dramabox.png') center/cover no-repeat;
+/* ACTIVE CENTER EFFECT */
+.platform-card.active{
+transform:scale(1.15);
+opacity:1;
 }
 
-/* Arrows */
-.nav-btn{
+.platform-card:not(.active){
+opacity:.5;
+transform:scale(.9);
+}
+
+/* Desktop Arrows */
+.arrow{
 position:absolute;
 top:50%;
 transform:translateY(-50%);
 background:rgba(0,0,0,.6);
 border:none;
 color:white;
-font-size:30px;
-width:50px;
-height:50px;
+width:45px;
+height:45px;
 border-radius:50%;
 cursor:pointer;
+font-size:20px;
 z-index:10;
 transition:.3s;
 }
 
-.nav-btn:hover{
-background:rgba(229,9,20,.9);
+.arrow:hover{
+background:var(--red);
 }
 
-.nav-btn.left{left:40px}
-.nav-btn.right{right:40px}
+.arrow.left{left:-10px}
+.arrow.right{right:-10px}
 
-/* Hide arrow on mobile */
-@media(max-width:768px){
-.nav-btn{display:none}
-.platform-card{
-width:170px;
-height:250px;
-}
-.logo h1{font-size:28px}
+/* Background Images */
+.dramabox-bg{
+background:url('https://captain.sapimu.au/logos/dramabox.png') center/cover no-repeat;
 }
 
-/* Fade animation */
+.netshort-bg{
+background:#151522;
+}
+
+.reelshort-bg{
+background:#1c1111;
+}
+
 .fade-out{
-animation:fadeOut .4s forwards;
+animation:fadeOut .5s forwards;
 }
 
 @keyframes fadeOut{
 to{opacity:0}
 }
 
+/* MOBILE */
+@media(max-width:768px){
+
+body{
+justify-content:flex-start;
+padding-top:60px;
+}
+
+.logo h1{font-size:28px}
+
+.platform-card{
+width:170px;
+height:250px;
+}
+
+.arrow{display:none}
+
+}
 </style>
 </head>
 
@@ -185,90 +206,99 @@ to{opacity:0}
 
 <div class="tagline">Choose Your Platform</div>
 
-<div class="platform-wrapper">
+<div class="carousel-wrapper">
+<button class="arrow left" onclick="scrollLeft()">‹</button>
+<div class="platforms" id="carousel">
 
-<button class="nav-btn left" onclick="scrollLeftBtn()">‹</button>
-
-<div class="platforms" id="platforms">
-
+<!-- ORIGINAL SET -->
 <div class="platform-card dramabox-bg" onclick="go('dramabox.html')">
 <div class="platform-title">DramaBox</div>
 </div>
 
-<div class="platform-card" onclick="go('netshort.html')" style="background:#151522">
+<div class="platform-card netshort-bg" onclick="go('netshort.html')">
 <div class="platform-title">NetShort</div>
 </div>
 
-<div class="platform-card" onclick="go('reelshort.html')" style="background:#1c1111">
+<div class="platform-card reelshort-bg" onclick="go('reelshort.html')">
 <div class="platform-title">ReelShort</div>
 </div>
 
 </div>
-
-<button class="nav-btn right" onclick="scrollRightBtn()">›</button>
-
+<button class="arrow right" onclick="scrollRight()">›</button>
 </div>
 
 <script>
 
 /* 🔒 ACCESS LOCK */
 const ACCESS_KEY="koroi2026";
-
 function checkAccess(){
 const params=new URLSearchParams(window.location.search);
-const key=params.get("access");
-if(key!==ACCESS_KEY){
-document.body.innerHTML='<div style="height:100vh;display:flex;align-items:center;justify-content:center;background:#000;color:white;font-family:Poppins;"><h2>Access Denied</h2></div>';
-throw new Error("Invalid Access");
+if(params.get("access")!==ACCESS_KEY){
+document.body.innerHTML="<h2 style='color:white;text-align:center;margin-top:40vh'>Access Denied</h2>";
+return false;
 }
+return true;
 }
-checkAccess();
+if(!checkAccess()) throw new Error("Access denied");
 
-/* NAVIGATION */
+/* ===== TRUE INFINITE ENGINE ===== */
+
+const carousel=document.getElementById("carousel");
+const originalCards=[...carousel.children];
+
+/* Duplicate 3x set */
+for(let i=0;i<2;i++){
+originalCards.forEach(card=>{
+carousel.appendChild(card.cloneNode(true));
+});
+}
+
+/* Start in middle */
+const cardWidth=originalCards[0].offsetWidth+30;
+carousel.scrollLeft=cardWidth*originalCards.length;
+
+function updateActive(){
+const cards=[...carousel.children];
+const center=carousel.scrollLeft+carousel.offsetWidth/2;
+cards.forEach(card=>{
+const cardCenter=card.offsetLeft+card.offsetWidth/2;
+if(Math.abs(center-cardCenter)<card.offsetWidth/2){
+card.classList.add("active");
+}else{
+card.classList.remove("active");
+}
+});
+}
+
+carousel.addEventListener("scroll",()=>{
+updateActive();
+
+/* reposition when too far */
+if(carousel.scrollLeft<cardWidth){
+carousel.scrollLeft+=cardWidth*originalCards.length;
+}
+if(carousel.scrollLeft>cardWidth*originalCards.length*2){
+carousel.scrollLeft-=cardWidth*originalCards.length;
+}
+});
+
+updateActive();
+
+/* Arrow controls */
+function scrollLeft(){
+carousel.scrollBy({left:-cardWidth,behavior:"smooth"});
+}
+function scrollRight(){
+carousel.scrollBy({left:cardWidth,behavior:"smooth"});
+}
+
+/* Navigation */
 function go(page){
 document.body.classList.add("fade-out");
 setTimeout(()=>{
 window.location.href=page+"?access="+ACCESS_KEY;
-},300);
+},400);
 }
-
-/* ===== INFINITE CAROUSEL ===== */
-
-const container=document.getElementById("platforms");
-let cards=Array.from(container.children);
-
-/* Clone first & last */
-const firstClone=cards[0].cloneNode(true);
-const lastClone=cards[cards.length-1].cloneNode(true);
-
-container.appendChild(firstClone);
-container.insertBefore(lastClone,cards[0]);
-
-cards=Array.from(container.children);
-
-let cardWidth;
-
-window.addEventListener("load",()=>{
-cardWidth=cards[1].offsetWidth+30;
-container.scrollLeft=cardWidth;
-});
-
-function scrollRightBtn(){
-container.scrollBy({left:cardWidth,behavior:'smooth'});
-}
-
-function scrollLeftBtn(){
-container.scrollBy({left:-cardWidth,behavior:'smooth'});
-}
-
-container.addEventListener("scroll",()=>{
-if(container.scrollLeft<=0){
-container.scrollLeft=cardWidth*(cards.length-2);
-}
-if(container.scrollLeft>=cardWidth*(cards.length-1)){
-container.scrollLeft=cardWidth;
-}
-});
 
 </script>
 
