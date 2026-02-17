@@ -14,28 +14,21 @@
 --bg:#0b0b0f;
 }
 
-*{
-box-sizing:border-box;
-margin:0;
-padding:0;
-}
-
-html,body{
-height:100%;
-overflow:hidden;
-}
+*{box-sizing:border-box;margin:0;padding:0}
 
 body{
 font-family:Poppins;
 background:var(--bg);
 color:white;
+overflow:hidden;
 display:flex;
 flex-direction:column;
 align-items:center;
 justify-content:center;
+height:100vh;
 }
 
-/* Animated Background */
+/* Background */
 body::before{
 content:"";
 position:fixed;
@@ -51,27 +44,15 @@ from{transform:rotate(0deg)}
 to{transform:rotate(360deg)}
 }
 
-/* Entrance animation */
-body{
-animation:fadeIn .6s ease forwards;
-}
-
-@keyframes fadeIn{
-from{opacity:0; transform:translateY(10px);}
-to{opacity:1; transform:translateY(0);}
-}
-
 /* Logo */
 .logo{
 display:flex;
 align-items:center;
 gap:15px;
-margin-bottom:20px;
+margin-bottom:15px;
 }
 
-.logo img{
-width:90px;
-}
+.logo img{width:90px}
 
 .logo h1{
 font-size:36px;
@@ -84,35 +65,33 @@ background:linear-gradient(90deg,#ff3d3d,#ff0000,#ff5c5c);
 .tagline{
 font-size:14px;
 opacity:.7;
-margin-bottom:50px;
+margin-bottom:40px;
 letter-spacing:1px;
 }
 
-/* PLATFORM CONTAINER */
+/* Wrapper */
 .platform-wrapper{
+position:relative;
 width:100%;
 overflow:hidden;
 }
 
+/* Carousel */
 .platforms{
 display:flex;
 gap:30px;
 overflow-x:auto;
 scroll-snap-type:x mandatory;
 scroll-behavior:smooth;
-padding:0 calc(50vw - 110px); /* center snapping */
+padding:20px 50vw;
 }
 
-.platforms::-webkit-scrollbar{
-display:none;
-}
+.platforms::-webkit-scrollbar{display:none}
 
-/* PLATFORM CARD */
 .platform-card{
 width:220px;
 height:320px;
 border-radius:20px;
-overflow:hidden;
 cursor:pointer;
 position:relative;
 transition:.4s ease;
@@ -127,20 +106,16 @@ flex:0 0 auto;
 }
 
 .platform-card:hover{
-transform:scale(1.06);
-box-shadow:0 0 45px rgba(229,9,20,.5);
+transform:scale(1.05);
+box-shadow:0 0 50px rgba(229,9,20,.6);
 }
 
 .platform-card::after{
 content:"";
 position:absolute;
 inset:0;
-background:linear-gradient(to top,rgba(0,0,0,.9),rgba(0,0,0,.2));
-}
-
-/* Platform specific background */
-.dramabox-bg{
-background:url('https://captain.sapimu.au/logos/dramabox.png') center/cover no-repeat;
+background:linear-gradient(to top,rgba(0,0,0,.85),rgba(0,0,0,.2));
+border-radius:20px;
 }
 
 .platform-title{
@@ -150,32 +125,54 @@ font-size:20px;
 font-weight:700;
 }
 
-/* Fade out animation */
+/* Platform BG */
+.dramabox-bg{
+background:url('https://captain.sapimu.au/logos/dramabox.png') center/cover no-repeat;
+}
+
+/* Arrows */
+.nav-btn{
+position:absolute;
+top:50%;
+transform:translateY(-50%);
+background:rgba(0,0,0,.6);
+border:none;
+color:white;
+font-size:30px;
+width:50px;
+height:50px;
+border-radius:50%;
+cursor:pointer;
+z-index:10;
+transition:.3s;
+}
+
+.nav-btn:hover{
+background:rgba(229,9,20,.9);
+}
+
+.nav-btn.left{left:40px}
+.nav-btn.right{right:40px}
+
+/* Hide arrow on mobile */
+@media(max-width:768px){
+.nav-btn{display:none}
+.platform-card{
+width:170px;
+height:250px;
+}
+.logo h1{font-size:28px}
+}
+
+/* Fade animation */
 .fade-out{
 animation:fadeOut .4s forwards;
 }
 
 @keyframes fadeOut{
-to{opacity:0; transform:scale(.98);}
+to{opacity:0}
 }
 
-/* MOBILE */
-@media(max-width:768px){
-
-.logo h1{
-font-size:28px;
-}
-
-.platform-card{
-width:170px;
-height:250px;
-}
-
-.platforms{
-padding:0 calc(50vw - 85px); /* re-center for smaller card */
-}
-
-}
 </style>
 </head>
 
@@ -186,12 +183,13 @@ padding:0 calc(50vw - 85px); /* re-center for smaller card */
 <h1>Koroi Drama</h1>
 </div>
 
-<div class="tagline">
-Choose Your Platform
-</div>
+<div class="tagline">Choose Your Platform</div>
 
 <div class="platform-wrapper">
-<div class="platforms">
+
+<button class="nav-btn left" onclick="scrollLeftBtn()">‹</button>
+
+<div class="platforms" id="platforms">
 
 <div class="platform-card dramabox-bg" onclick="go('dramabox.html')">
 <div class="platform-title">DramaBox</div>
@@ -206,45 +204,71 @@ Choose Your Platform
 </div>
 
 </div>
+
+<button class="nav-btn right" onclick="scrollRightBtn()">›</button>
+
 </div>
 
 <script>
 
-/* 🔒 GLOBAL ACCESS LOCK */
-const ACCESS_KEY = "koroi2026";
+/* 🔒 ACCESS LOCK */
+const ACCESS_KEY="koroi2026";
 
 function checkAccess(){
-const params = new URLSearchParams(window.location.search);
-const key = params.get("access");
-
-if(key !== ACCESS_KEY){
-document.body.innerHTML = `
-<div style="
-height:100vh;
-display:flex;
-align-items:center;
-justify-content:center;
-background:#000;
-color:white;
-font-family:Poppins;
-">
-<h2>Access Denied</h2>
-</div>
-`;
-return false;
+const params=new URLSearchParams(window.location.search);
+const key=params.get("access");
+if(key!==ACCESS_KEY){
+document.body.innerHTML='<div style="height:100vh;display:flex;align-items:center;justify-content:center;background:#000;color:white;font-family:Poppins;"><h2>Access Denied</h2></div>';
+throw new Error("Invalid Access");
 }
-return true;
 }
+checkAccess();
 
-if(!checkAccess()) throw new Error("Access Blocked");
-
-/* Navigation */
+/* NAVIGATION */
 function go(page){
 document.body.classList.add("fade-out");
 setTimeout(()=>{
-window.location.href = page + "?access=" + ACCESS_KEY;
-},350);
+window.location.href=page+"?access="+ACCESS_KEY;
+},300);
 }
+
+/* ===== INFINITE CAROUSEL ===== */
+
+const container=document.getElementById("platforms");
+let cards=Array.from(container.children);
+
+/* Clone first & last */
+const firstClone=cards[0].cloneNode(true);
+const lastClone=cards[cards.length-1].cloneNode(true);
+
+container.appendChild(firstClone);
+container.insertBefore(lastClone,cards[0]);
+
+cards=Array.from(container.children);
+
+let cardWidth;
+
+window.addEventListener("load",()=>{
+cardWidth=cards[1].offsetWidth+30;
+container.scrollLeft=cardWidth;
+});
+
+function scrollRightBtn(){
+container.scrollBy({left:cardWidth,behavior:'smooth'});
+}
+
+function scrollLeftBtn(){
+container.scrollBy({left:-cardWidth,behavior:'smooth'});
+}
+
+container.addEventListener("scroll",()=>{
+if(container.scrollLeft<=0){
+container.scrollLeft=cardWidth*(cards.length-2);
+}
+if(container.scrollLeft>=cardWidth*(cards.length-1)){
+container.scrollLeft=cardWidth;
+}
+});
 
 </script>
 
