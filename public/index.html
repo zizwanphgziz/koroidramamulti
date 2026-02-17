@@ -28,7 +28,7 @@ justify-content:center;
 height:100vh;
 }
 
-/* Animated Background */
+/* Background */
 body::before{
 content:"";
 position:fixed;
@@ -48,7 +48,7 @@ to{transform:rotate(360deg)}
 display:flex;
 align-items:center;
 gap:15px;
-margin-bottom:15px;
+margin-bottom:20px;
 }
 
 .logo img{width:90px}
@@ -65,7 +65,6 @@ background:linear-gradient(90deg,#ff3d3d,#ff0000,#ff5c5c);
 font-size:14px;
 opacity:.7;
 margin-bottom:40px;
-letter-spacing:1px;
 }
 
 /* ===== CAROUSEL ===== */
@@ -77,33 +76,27 @@ max-width:1200px;
 overflow:hidden;
 }
 
-.platforms{
+.carousel{
 display:flex;
-gap:30px;
-overflow-x:auto;
-scroll-behavior:smooth;
-padding:40px 0;
-scroll-snap-type:x mandatory;
+align-items:center;
+justify-content:center;
+position:relative;
 }
 
-.platforms::-webkit-scrollbar{display:none}
-
 .platform-card{
+position:absolute;
 width:240px;
 height:340px;
 border-radius:18px;
 overflow:hidden;
 cursor:pointer;
-position:relative;
-flex:0 0 auto;
-scroll-snap-align:center;
 display:flex;
 align-items:flex-end;
 justify-content:center;
 padding-bottom:25px;
 background-size:cover;
 background-position:center;
-transition:transform .4s ease, opacity .4s ease;
+transition:all .5s ease;
 }
 
 .platform-card::after{
@@ -120,18 +113,26 @@ font-size:22px;
 font-weight:700;
 }
 
-/* ACTIVE CENTER EFFECT */
-.platform-card.active{
-transform:scale(1.15);
+/* depth positions */
+.platform-card.center{
+transform:translateX(0) scale(1.15);
 opacity:1;
+z-index:3;
 }
 
-.platform-card:not(.active){
+.platform-card.left{
+transform:translateX(-300px) scale(.85);
 opacity:.5;
-transform:scale(.9);
+z-index:2;
 }
 
-/* Desktop Arrows */
+.platform-card.right{
+transform:translateX(300px) scale(.85);
+opacity:.5;
+z-index:2;
+}
+
+/* Arrows */
 .arrow{
 position:absolute;
 top:50%;
@@ -145,38 +146,24 @@ border-radius:50%;
 cursor:pointer;
 font-size:20px;
 z-index:10;
-transition:.3s;
 }
 
-.arrow:hover{
-background:var(--red);
-}
+.arrow:hover{background:var(--red)}
+.arrow.left{left:50px}
+.arrow.right{right:50px}
 
-.arrow.left{left:-10px}
-.arrow.right{right:-10px}
-
-/* Background Images */
+/* Background images */
 .dramabox-bg{
 background:url('https://captain.sapimu.au/logos/dramabox.png') center/cover no-repeat;
 }
-
-.netshort-bg{
-background:#151522;
-}
-
-.reelshort-bg{
-background:#1c1111;
-}
+.netshort-bg{background:#151522;}
+.reelshort-bg{background:#1c1111;}
 
 .fade-out{
 animation:fadeOut .5s forwards;
 }
+@keyframes fadeOut{to{opacity:0}}
 
-@keyframes fadeOut{
-to{opacity:0}
-}
-
-/* MOBILE */
 @media(max-width:768px){
 
 body{
@@ -187,8 +174,8 @@ padding-top:60px;
 .logo h1{font-size:28px}
 
 .platform-card{
-width:170px;
-height:250px;
+width:180px;
+height:260px;
 }
 
 .arrow{display:none}
@@ -207,10 +194,11 @@ height:250px;
 <div class="tagline">Choose Your Platform</div>
 
 <div class="carousel-wrapper">
-<button class="arrow left" onclick="scrollLeft()">‹</button>
-<div class="platforms" id="carousel">
 
-<!-- ORIGINAL SET -->
+<button class="arrow left" onclick="prev()">‹</button>
+
+<div class="carousel" id="carousel">
+
 <div class="platform-card dramabox-bg" onclick="go('dramabox.html')">
 <div class="platform-title">DramaBox</div>
 </div>
@@ -224,73 +212,66 @@ height:250px;
 </div>
 
 </div>
-<button class="arrow right" onclick="scrollRight()">›</button>
+
+<button class="arrow right" onclick="next()">›</button>
+
 </div>
 
 <script>
 
-/* 🔒 ACCESS LOCK */
+/* ACCESS LOCK */
 const ACCESS_KEY="koroi2026";
-function checkAccess(){
-const params=new URLSearchParams(window.location.search);
-if(params.get("access")!==ACCESS_KEY){
+if(new URLSearchParams(window.location.search).get("access")!==ACCESS_KEY){
 document.body.innerHTML="<h2 style='color:white;text-align:center;margin-top:40vh'>Access Denied</h2>";
-return false;
-}
-return true;
-}
-if(!checkAccess()) throw new Error("Access denied");
-
-/* ===== TRUE INFINITE ENGINE ===== */
-
-const carousel=document.getElementById("carousel");
-const originalCards=[...carousel.children];
-
-/* Duplicate 3x set */
-for(let i=0;i<2;i++){
-originalCards.forEach(card=>{
-carousel.appendChild(card.cloneNode(true));
-});
+throw new Error("Access Denied");
 }
 
-/* Start in middle */
-const cardWidth=originalCards[0].offsetWidth+30;
-carousel.scrollLeft=cardWidth*originalCards.length;
+/* TRUE INFINITE ROTATION ENGINE */
 
-function updateActive(){
-const cards=[...carousel.children];
-const center=carousel.scrollLeft+carousel.offsetWidth/2;
-cards.forEach(card=>{
-const cardCenter=card.offsetLeft+card.offsetWidth/2;
-if(Math.abs(center-cardCenter)<card.offsetWidth/2){
-card.classList.add("active");
-}else{
-card.classList.remove("active");
+const cards=[...document.querySelectorAll(".platform-card")];
+let index=0;
+
+function updateCarousel(){
+cards.forEach((card,i)=>{
+card.classList.remove("left","center","right");
+
+if(i===index){
+card.classList.add("center");
+}
+else if(i===(index-1+cards.length)%cards.length){
+card.classList.add("left");
+}
+else if(i===(index+1)%cards.length){
+card.classList.add("right");
+}
+else{
+card.style.opacity=0;
 }
 });
 }
 
-carousel.addEventListener("scroll",()=>{
-updateActive();
+function next(){
+index=(index+1)%cards.length;
+updateCarousel();
+}
 
-/* reposition when too far */
-if(carousel.scrollLeft<cardWidth){
-carousel.scrollLeft+=cardWidth*originalCards.length;
+function prev(){
+index=(index-1+cards.length)%cards.length;
+updateCarousel();
 }
-if(carousel.scrollLeft>cardWidth*originalCards.length*2){
-carousel.scrollLeft-=cardWidth*originalCards.length;
-}
+
+/* Mobile swipe */
+let startX=0;
+document.addEventListener("touchstart",e=>{
+startX=e.touches[0].clientX;
+});
+document.addEventListener("touchend",e=>{
+let diff=e.changedTouches[0].clientX-startX;
+if(diff>50) prev();
+if(diff<-50) next();
 });
 
-updateActive();
-
-/* Arrow controls */
-function scrollLeft(){
-carousel.scrollBy({left:-cardWidth,behavior:"smooth"});
-}
-function scrollRight(){
-carousel.scrollBy({left:cardWidth,behavior:"smooth"});
-}
+updateCarousel();
 
 /* Navigation */
 function go(page){
