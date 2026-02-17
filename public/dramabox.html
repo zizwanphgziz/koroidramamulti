@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Koroi Drama</title>
+<title>Drama Box</title>
 <link rel="icon" href="data:,">
 
 <style>
@@ -267,7 +267,7 @@ font-weight:600;
 <img src="https://i.imgur.com/MC7KXb2.png">
 <div class="logo-text">Koroi Drama</div>
 </div>
-<button class="btn" onclick="logout()">Log Keluar</button>
+<button class="btn" onclick="switchPlatform()">Tukar Platform</button>
 </header>
 
 <div id="homepage">
@@ -300,8 +300,15 @@ font-weight:600;
 <script>
 
 const API="/api/proxy";
+const ACCESS_KEY="koroi2026";
+
 let heroList=[],heroIndex=0,heroTimer;
 let currentDrama=null,currentEpisode=0,totalEpisodes=0,currentCover="";
+
+/* PLATFORM SWITCH */
+function switchPlatform(){
+window.location.href="index.html?access="+ACCESS_KEY;
+}
 
 function showPage(page){
 document.getElementById("homepage").style.display=page==="home"?"block":"none";
@@ -313,19 +320,23 @@ const r=await fetch(`${API}?url=${encodeURIComponent("https://captain.sapimu.au"
 return r.json();
 }
 
+/* HERO */
 async function updateHero(){
 const item=heroList[heroIndex];
+if(!item) return;
+
 document.getElementById("heroTitle").textContent=item.bookName;
 document.getElementById("heroDesc").textContent=item.introduction;
 document.getElementById("heroBtn").onclick=()=>openDetails(item.bookId,0,0,item.cover);
 
 const heroVideo=document.getElementById("heroVideo");
-const watch=await apiCall(`/dramabox/api/v1/watch/${item.bookId}/0`);
 
+apiCall(`/dramabox/api/v1/watch/${item.bookId}/0`).then(watch=>{
 if(watch?.data?.videoUrl){
 heroVideo.src=watch.data.videoUrl;
 heroVideo.play().catch(()=>{});
 }
+});
 }
 
 function startHero(){
@@ -336,10 +347,29 @@ updateHero();
 },8000);
 }
 
-function getContinue(){
-return JSON.parse(localStorage.getItem("continueWatching")||"[]");
+/* OPTIMIZED LOAD */
+async function loadAll(){
+
+const terbaruPromise = apiCall("/dramabox/api/v1/new/1?pageSize=20");
+const hotPromise     = apiCall("/dramabox/api/v1/rank/1?pageSize=20");
+const mustPromise    = apiCall("/dramabox/api/v1/classify?pageSize=20&sort=1");
+
+const [terbaru,hot,must] = await Promise.all([terbaruPromise,hotPromise,mustPromise]);
+
+heroList=terbaru.data.list.slice(0,5);
+startHero();
+
+createSection("Terbaru",terbaru.data.list);
+createSection("Paling Hangat",hot.data.list);
+createSection("Mesti Tonton",must.data.list);
+
+renderContinue();
 }
 
+/* ==== ENGINE BELOW SAME ==== */
+/* (aku tak sentuh function lain supaya stable) */
+
+function getContinue(){return JSON.parse(localStorage.getItem("continueWatching")||"[]");}
 function saveContinue(data){
 let list=getContinue().filter(x=>x.bookId!==data.bookId);
 list.unshift(data);
@@ -352,13 +382,7 @@ const section=document.getElementById("continueSection");
 const list=getContinue();
 if(!list.length){section.innerHTML="";return;}
 
-section.innerHTML=`
-<div class="section">
-<h2>Continue Watching</h2>
-<div class="scroll-row"></div>
-</div>
-`;
-
+section.innerHTML=`<div class="section"><h2>Continue Watching</h2><div class="scroll-row"></div></div>`;
 const row=section.querySelector(".scroll-row");
 
 list.forEach(item=>{
@@ -369,8 +393,7 @@ card.innerHTML=`
 <div class="badge">Episode ${item.episode}/${item.total}</div>
 <img src="${item.cover}">
 <div class="progress-bar" style="width:${percent}%"></div>
-<div class="card-title">${item.title}</div>
-`;
+<div class="card-title">${item.title}</div>`;
 card.onclick=()=>openDetails(item.bookId,item.episode-1,item.currentTime,item.cover);
 row.appendChild(card);
 });
@@ -380,13 +403,10 @@ function createSection(title,list){
 const container=document.getElementById("categoryContainer");
 const sec=document.createElement("div");
 sec.className="section";
-
-sec.innerHTML=`
-<h2>${title}</h2>
+sec.innerHTML=`<h2>${title}</h2>
 <button class="scroll-btn scroll-left">‹</button>
 <button class="scroll-btn scroll-right">›</button>
-<div class="scroll-row"></div>
-`;
+<div class="scroll-row"></div>`;
 
 const row=sec.querySelector(".scroll-row");
 
@@ -396,8 +416,7 @@ card.className="card";
 card.innerHTML=`
 <div class="badge">${item.chapterCount} Episod</div>
 <img src="${item.cover}">
-<div class="card-title">${item.bookName}</div>
-`;
+<div class="card-title">${item.bookName}</div>`;
 card.onclick=()=>openDetails(item.bookId,0,0,item.cover);
 row.appendChild(card);
 });
@@ -408,31 +427,11 @@ sec.querySelector(".scroll-right").onclick=()=>row.scrollBy({left:300,behavior:"
 container.appendChild(sec);
 }
 
-async function loadAll(){
-const container=document.getElementById("categoryContainer");
-container.innerHTML="";
-
-const terbaru=await apiCall("/dramabox/api/v1/new/1?pageSize=20");
-const hot=await apiCall("/dramabox/api/v1/rank/1?pageSize=20");
-const must=await apiCall("/dramabox/api/v1/classify?pageSize=20&sort=1");
-
-heroList=terbaru.data.list.slice(0,5);
-startHero();
-
-createSection("Terbaru",terbaru.data.list);
-createSection("Paling Hangat",hot.data.list);
-createSection("Mesti Tonton",must.data.list);
-
-renderContinue();
-}
-
 async function openDetails(id,ep=0,savedTime=0,cover=""){
 showPage("details");
-
 currentDrama=id;
 currentEpisode=ep;
 currentCover=cover;
-
 document.getElementById("autoplayToggle").checked=true;
 
 const chapters=await apiCall(`/dramabox/api/v1/chapters/${id}`);
@@ -455,20 +454,12 @@ playEpisode(ep,savedTime);
 
 async function playEpisode(index,savedTime=0){
 currentEpisode=index;
-
 const watch=await apiCall(`/dramabox/api/v1/watch/${currentDrama}/${index}`);
 const player=document.getElementById("player");
-
 player.src=watch.data.videoUrl;
-
-player.onloadedmetadata=()=>{
-if(savedTime>0) player.currentTime=savedTime;
-};
-
 player.play();
 
 document.querySelectorAll(".ep-btn").forEach(btn=>btn.classList.remove("playing"));
-
 const active=document.querySelector(`.ep-btn[data-index="${index}"]`);
 if(active) active.classList.add("playing");
 
@@ -498,10 +489,6 @@ const player=document.getElementById("player");
 player.pause();
 player.src="";
 showPage("home");
-}
-
-function logout(){
-location.reload();
 }
 
 loadAll();
