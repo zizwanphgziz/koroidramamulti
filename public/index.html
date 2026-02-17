@@ -73,8 +73,14 @@ letter-spacing:1px;
 .platforms{
 display:flex;
 gap:30px;
-flex-wrap:wrap;
-justify-content:center;
+overflow-x:auto;
+scroll-behavior:smooth;
+padding:0 20px;
+width:100%;
+}
+
+.platforms::-webkit-scrollbar{
+display:none;
 }
 
 .platform-card{
@@ -85,12 +91,13 @@ overflow:hidden;
 cursor:pointer;
 position:relative;
 transition:all .4s ease;
-background:#111;
 display:flex;
-align-items:center;
+align-items:flex-end;
 justify-content:center;
-font-weight:700;
-font-size:20px;
+padding-bottom:20px;
+background-size:cover;
+background-position:center;
+flex:0 0 auto;
 }
 
 .platform-card:hover{
@@ -102,13 +109,14 @@ box-shadow:0 0 40px rgba(229,9,20,.5);
 content:"";
 position:absolute;
 inset:0;
-background:linear-gradient(to top,rgba(0,0,0,.8),transparent);
+background:linear-gradient(to top,rgba(0,0,0,.85),rgba(0,0,0,.2));
 }
 
 .platform-title{
-position:absolute;
-bottom:20px;
+position:relative;
 z-index:2;
+font-size:20px;
+font-weight:700;
 }
 
 .fade-out{
