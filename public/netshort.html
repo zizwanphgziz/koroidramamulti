@@ -10,13 +10,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap');
 
 :root{
---red:#00c853;
---bg:#0b0f0c;
---card:#141c16;
+--red:#E50914;
+--bg:#0b0b0f;
+--card:#14141c;
 }
 
 *{box-sizing:border-box}
-
 body{
 margin:0;
 font-family:Poppins;
@@ -38,18 +37,18 @@ align-items:center;
 gap:14px;
 }
 
-.logo-wrap img{
-width:80px;
-}
+.logo-wrap img{width:80px}
 
 .logo-text{
 font-size:26px;
 font-weight:800;
-color:#00e676;
+background:linear-gradient(90deg,#ff3d3d,#ff0000,#ff5c5c);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
 }
 
 .btn{
-background:#00c853;
+background:linear-gradient(90deg,#ff3d3d,#ff0000);
 border:none;
 padding:10px 18px;
 border-radius:6px;
@@ -60,11 +59,11 @@ cursor:pointer;
 
 .hero{
 position:relative;
-height:65vh;
-overflow:hidden;
+height:70vh;
 display:flex;
 align-items:flex-end;
 padding:40px 5%;
+overflow:hidden;
 }
 
 .hero video{
@@ -84,7 +83,6 @@ background:linear-gradient(to top,rgba(0,0,0,.9),rgba(0,0,0,.2));
 .hero-content{
 position:relative;
 z-index:2;
-max-width:600px;
 }
 
 .section{
@@ -99,7 +97,7 @@ overflow-x:auto;
 scroll-behavior:smooth;
 }
 
-.scroll-row::-webkit-scrollbar{display:none;}
+.scroll-row::-webkit-scrollbar{display:none}
 
 .card{
 min-width:170px;
@@ -110,7 +108,6 @@ overflow:hidden;
 cursor:pointer;
 display:flex;
 flex-direction:column;
-position:relative;
 }
 
 .card img{
@@ -120,38 +117,20 @@ object-fit:cover;
 }
 
 .card-title{
-padding:8px;
+padding:10px;
 font-size:13px;
 text-align:center;
+display:-webkit-box;
+-webkit-line-clamp:2;
+-webkit-box-orient:vertical;
+overflow:hidden;
 }
 
-.badge{
-position:absolute;
-top:8px;
-left:8px;
-background:#00c853;
-padding:4px 8px;
-font-size:11px;
-border-radius:20px;
-}
+.details{display:none;padding:30px 5%}
 
-.remove-btn{
-position:absolute;
-top:6px;
-right:6px;
-background:red;
-color:white;
-border:none;
-width:20px;
-height:20px;
-border-radius:50%;
-cursor:pointer;
-font-size:12px;
-}
-
-.details{
-display:none;
-padding:30px 5%;
+.video-wrap{
+max-width:900px;
+margin:auto;
 }
 
 video{
@@ -162,7 +141,7 @@ border-radius:8px;
 .episodes{
 margin-top:20px;
 display:grid;
-grid-template-columns:repeat(auto-fill,minmax(70px,1fr));
+grid-template-columns:repeat(auto-fill,minmax(80px,1fr));
 gap:8px;
 max-height:300px;
 overflow-y:auto;
@@ -176,6 +155,12 @@ border-radius:4px;
 cursor:pointer;
 font-size:12px;
 }
+
+.ep-btn.playing{
+background:var(--red);
+color:white;
+font-weight:600;
+}
 </style>
 </head>
 
@@ -183,7 +168,7 @@ font-size:12px;
 
 <header>
 <div class="logo-wrap">
-<img src="https://captain.sapimu.au/logos/netshort.png">
+<img src="https://i.imgur.com/MC7KXb2.png">
 <div class="logo-text">NetShort</div>
 </div>
 <button class="btn" onclick="switchPlatform()">Tukar Platform</button>
@@ -195,18 +180,21 @@ font-size:12px;
 <div class="hero-overlay"></div>
 <div class="hero-content">
 <h1 id="heroTitle"></h1>
-<p id="heroDesc"></p>
 <button class="btn" id="heroBtn">Tonton Sekarang</button>
 </div>
 </div>
 
-<div id="continueSection"></div>
-<div id="categoryContainer"></div>
+<div class="section">
+<h2>Latest Feed</h2>
+<div class="scroll-row" id="feedRow"></div>
+</div>
 </div>
 
 <div id="detailsPage" class="details">
 <button class="btn" onclick="goHome()">← Kembali</button>
+<div class="video-wrap">
 <video id="player" controls></video>
+</div>
 <div class="episodes" id="episodes"></div>
 </div>
 
@@ -214,8 +202,6 @@ font-size:12px;
 
 const API="/api/proxy";
 const ACCESS_KEY="koroi2026";
-
-let heroList=[],heroIndex=0,currentDrama=null;
 
 function switchPlatform(){
 window.location.href="index.html?access="+ACCESS_KEY;
@@ -227,138 +213,86 @@ document.getElementById("detailsPage").style.display=page==="details"?"block":"n
 }
 
 async function apiCall(endpoint){
-const r=await fetch(`${API}?url=${encodeURIComponent("https://captain.sapimu.au/netshort"+endpoint)}`);
+const url=`https://captain.sapimu.au/netshort${endpoint}`;
+const r=await fetch(`${API}?url=${encodeURIComponent(url)}`);
 return r.json();
 }
 
-function getContinue(){
-return JSON.parse(localStorage.getItem("netshortContinue")||"[]");
-}
-
-function saveContinue(data){
-let list=getContinue().filter(x=>x.id!==data.id);
-list.unshift(data);
-localStorage.setItem("netshortContinue",JSON.stringify(list.slice(0,10)));
-renderContinue();
-}
-
-function removeContinue(id){
-let list=getContinue().filter(x=>x.id!==id);
-localStorage.setItem("netshortContinue",JSON.stringify(list));
-renderContinue();
-}
-
-function clearContinue(){
-localStorage.removeItem("netshortContinue");
-renderContinue();
-}
-
-function renderContinue(){
-const section=document.getElementById("continueSection");
-const list=getContinue();
-if(!list.length){section.innerHTML="";return;}
-
-section.innerHTML=`<div class="section">
-<h2>Continue Watching</h2>
-<button class="btn" onclick="clearContinue()">Remove All</button>
-<div class="scroll-row"></div>
-</div>`;
-
-const row=section.querySelector(".scroll-row");
-
-list.forEach(item=>{
-const card=document.createElement("div");
-card.className="card";
-card.innerHTML=`
-<button class="remove-btn">×</button>
-<img src="${item.cover}">
-<div class="card-title">${item.title}</div>`;
-card.onclick=()=>openDetails(item.id);
-card.querySelector(".remove-btn").onclick=(e)=>{
-e.stopPropagation();
-removeContinue(item.id);
-};
-row.appendChild(card);
-});
-}
-
-function createSection(title,list){
-const container=document.getElementById("categoryContainer");
-const sec=document.createElement("div");
-sec.className="section";
-sec.innerHTML=`<h2>${title}</h2><div class="scroll-row"></div>`;
-const row=sec.querySelector(".scroll-row");
-
-list.forEach(item=>{
-const card=document.createElement("div");
-card.className="card";
-card.innerHTML=`
-<img src="${item.cover}">
-<div class="card-title">${item.title}</div>`;
-card.onclick=()=>openDetails(item.id,item.cover,item.title);
-row.appendChild(card);
-});
-
-container.appendChild(sec);
-}
-
+/* LOAD FEED */
 async function loadAll(){
-const feed=await apiCall("/api/v1/feed/1");
-const explore=await apiCall("/api/v1/explore/1");
-const latest=await apiCall("/api/v1/new/1");
-const dubbing=await apiCall("/api/v1/dubbing/1");
 
-heroList=feed.data.slice(0,5);
-updateHero();
+const data = await apiCall("/api/v1/feed/1");
 
-createSection("Recommendation",feed.data);
-createSection("Explore",explore.data);
-createSection("New Dramas",latest.data);
-createSection("Dubbed",dubbing.data);
-
-renderContinue();
+if(!data?.data?.list){
+console.log("Feed failed", data);
+return;
 }
 
-function updateHero(){
-const item=heroList[heroIndex];
-if(!item)return;
+const list=data.data.list;
 
-document.getElementById("heroTitle").textContent=item.title;
-document.getElementById("heroDesc").textContent=item.description||"";
-document.getElementById("heroBtn").onclick=()=>openDetails(item.id,item.cover,item.title);
+const hero=list[0];
+document.getElementById("heroTitle").textContent=hero.title;
+document.getElementById("heroBtn").onclick=()=>openDetails(hero.id);
 
-heroIndex=(heroIndex+1)%heroList.length;
-setTimeout(updateHero,8000);
+const heroVideo=document.getElementById("heroVideo");
+
+const firstEp=await apiCall(`/api/v1/episode/${hero.id}/1`);
+
+if(firstEp?.data?.videoUrl){
+heroVideo.src=firstEp.data.videoUrl;
+heroVideo.play().catch(()=>{});
 }
 
-async function openDetails(id,cover="",title=""){
+const row=document.getElementById("feedRow");
+row.innerHTML="";
+
+list.forEach(item=>{
+const card=document.createElement("div");
+card.className="card";
+card.innerHTML=`
+<img src="${item.cover}">
+<div class="card-title">${item.title}</div>
+`;
+card.onclick=()=>openDetails(item.id);
+row.appendChild(card);
+});
+}
+
+/* DETAILS */
+async function openDetails(id){
 showPage("details");
-currentDrama=id;
 
 const episodes=await apiCall(`/api/v1/episodes/${id}`);
+
+if(!episodes?.data?.list) return;
+
 const wrap=document.getElementById("episodes");
 wrap.innerHTML="";
 
-episodes.data.forEach((ep,i)=>{
+episodes.data.list.forEach(ep=>{
 const btn=document.createElement("div");
 btn.className="ep-btn";
-btn.textContent=i+1;
-btn.onclick=()=>playEpisode(id,i+1,cover,title);
+btn.textContent=ep.episodeNo;
+btn.onclick=()=>playEpisode(id,ep.episodeNo);
 wrap.appendChild(btn);
 });
+
+playEpisode(id,1);
 }
 
-async function playEpisode(id,no,cover,title){
-const res=await apiCall(`/api/v1/episode/${id}/${no}`);
-const player=document.getElementById("player");
-player.src=res.data.videoUrl;
-player.play();
+async function playEpisode(id,epNo){
+const watch=await apiCall(`/api/v1/episode/${id}/${epNo}`);
 
-saveContinue({
-id,
-cover,
-title
-});
+if(!watch?.data?.videoUrl) return;
+
+const player=document.getElementById("player");
+player.src=watch.data.videoUrl;
+player.play().catch(()=>{});
+
+document.querySelectorAll(".ep-btn").forEach(b=>b.classList.remove("playing"));
+const active=[...document.querySelectorAll(".ep-btn")]
+.find(b=>b.textContent==epNo);
+if(active) active.classList.add("playing");
 }
 
 function goHome(){
