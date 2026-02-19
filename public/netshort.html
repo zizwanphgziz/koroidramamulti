@@ -16,6 +16,7 @@
 }
 
 *{box-sizing:border-box}
+
 body{
 margin:0;
 font-family:Poppins;
@@ -24,6 +25,7 @@ color:white;
 overflow-x:hidden;
 }
 
+/* HEADER */
 header{
 display:flex;
 align-items:center;
@@ -57,13 +59,14 @@ font-weight:600;
 cursor:pointer;
 }
 
+/* HERO */
 .hero{
 position:relative;
-height:70vh;
+height:60vh;
+overflow:hidden;
 display:flex;
 align-items:flex-end;
 padding:40px 5%;
-overflow:hidden;
 }
 
 .hero video{
@@ -82,19 +85,28 @@ background:linear-gradient(to top,rgba(0,0,0,.9),rgba(0,0,0,.2));
 
 .hero-content{
 position:relative;
+max-width:600px;
 z-index:2;
 }
 
+/* SECTIONS */
 .section{
 padding:30px 5%;
 position:relative;
 }
 
+.section h2{
+margin-bottom:15px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+/* CARD */
 .scroll-row{
 display:flex;
 gap:14px;
 overflow-x:auto;
-scroll-behavior:smooth;
 }
 
 .scroll-row::-webkit-scrollbar{display:none}
@@ -106,6 +118,7 @@ background:var(--card);
 border-radius:10px;
 overflow:hidden;
 cursor:pointer;
+position:relative;
 display:flex;
 flex-direction:column;
 }
@@ -126,7 +139,31 @@ display:-webkit-box;
 overflow:hidden;
 }
 
-.details{display:none;padding:30px 5%}
+.progress-bar{
+height:4px;
+background:var(--red);
+}
+
+/* REMOVE BUTTON */
+.remove-btn{
+position:absolute;
+top:6px;
+right:6px;
+background:rgba(0,0,0,.6);
+color:white;
+border:none;
+border-radius:50%;
+width:20px;
+height:20px;
+font-size:12px;
+cursor:pointer;
+}
+
+/* DETAILS */
+.details{
+display:none;
+padding:30px 5%;
+}
 
 .video-wrap{
 max-width:900px;
@@ -175,6 +212,7 @@ font-weight:600;
 </header>
 
 <div id="homepage">
+
 <div class="hero">
 <video id="heroVideo" muted autoplay></video>
 <div class="hero-overlay"></div>
@@ -184,10 +222,13 @@ font-weight:600;
 </div>
 </div>
 
+<div id="continueSection"></div>
+
 <div class="section">
-<h2>Latest Feed</h2>
+<h2>Feed</h2>
 <div class="scroll-row" id="feedRow"></div>
 </div>
+
 </div>
 
 <div id="detailsPage" class="details">
@@ -203,44 +244,101 @@ font-weight:600;
 const API="/api/proxy";
 const ACCESS_KEY="koroi2026";
 
+let currentDrama=null;
+let currentCover="";
+let totalEpisodes=0;
+
+/* SWITCH */
 function switchPlatform(){
 window.location.href="index.html?access="+ACCESS_KEY;
 }
 
-function showPage(page){
-document.getElementById("homepage").style.display=page==="home"?"block":"none";
-document.getElementById("detailsPage").style.display=page==="details"?"block":"none";
+function showPage(p){
+homepage.style.display=p==="home"?"block":"none";
+detailsPage.style.display=p==="details"?"block":"none";
 }
 
 async function apiCall(endpoint){
 const url=`https://captain.sapimu.au/netshort${endpoint}`;
 const r=await fetch(`${API}?url=${encodeURIComponent(url)}`);
-return r.json();
+const data=await r.json();
+console.log("API:",endpoint,data);
+return data;
+}
+
+/* CONTINUE STORAGE */
+function getContinue(){
+return JSON.parse(localStorage.getItem("netshortContinue")||"[]");
+}
+
+function saveContinue(data){
+let list=getContinue().filter(x=>x.id!==data.id);
+list.unshift(data);
+localStorage.setItem("netshortContinue",JSON.stringify(list.slice(0,10)));
+renderContinue();
+}
+
+function removeOne(id){
+let list=getContinue().filter(x=>x.id!==id);
+localStorage.setItem("netshortContinue",JSON.stringify(list));
+renderContinue();
+}
+
+function removeAll(){
+localStorage.removeItem("netshortContinue");
+renderContinue();
+}
+
+function renderContinue(){
+const section=document.getElementById("continueSection");
+const list=getContinue();
+
+if(!list.length){
+section.innerHTML="";
+return;
+}
+
+section.innerHTML=`
+<div class="section">
+<h2>
+Continue Watching
+<button class="btn" style="padding:4px 10px;font-size:12px" onclick="removeAll()">Remove All</button>
+</h2>
+<div class="scroll-row"></div>
+</div>`;
+
+const row=section.querySelector(".scroll-row");
+
+list.forEach(item=>{
+const percent=item.duration?((item.currentTime/item.duration)*100):0;
+
+const card=document.createElement("div");
+card.className="card";
+card.innerHTML=`
+<button class="remove-btn" onclick="event.stopPropagation();removeOne('${item.id}')">×</button>
+<img src="${item.cover}">
+<div class="progress-bar" style="width:${percent}%"></div>
+<div class="card-title">${item.title}</div>
+`;
+card.onclick=()=>openDetails(item.id,item.ep,item.currentTime,item.cover);
+row.appendChild(card);
+});
 }
 
 /* LOAD FEED */
 async function loadAll(){
-
-const data = await apiCall("/api/v1/feed/1");
-
-if(!data?.data?.list){
-console.log("Feed failed", data);
-return;
-}
+const data=await apiCall("/api/v1/feed/1");
+if(!data?.data?.list) return;
 
 const list=data.data.list;
 
 const hero=list[0];
 document.getElementById("heroTitle").textContent=hero.title;
-document.getElementById("heroBtn").onclick=()=>openDetails(hero.id);
+document.getElementById("heroBtn").onclick=()=>openDetails(hero.id,1,0,hero.cover);
 
-const heroVideo=document.getElementById("heroVideo");
-
-const firstEp=await apiCall(`/api/v1/episode/${hero.id}/1`);
-
-if(firstEp?.data?.videoUrl){
-heroVideo.src=firstEp.data.videoUrl;
-heroVideo.play().catch(()=>{});
+const heroEp=await apiCall(`/api/v1/episode/${hero.id}/1`);
+if(heroEp?.data?.videoUrl){
+heroVideo.src=heroEp.data.videoUrl;
 }
 
 const row=document.getElementById("feedRow");
@@ -253,50 +351,73 @@ card.innerHTML=`
 <img src="${item.cover}">
 <div class="card-title">${item.title}</div>
 `;
-card.onclick=()=>openDetails(item.id);
+card.onclick=()=>openDetails(item.id,1,0,item.cover);
 row.appendChild(card);
 });
+
+renderContinue();
 }
 
 /* DETAILS */
-async function openDetails(id){
+async function openDetails(id,ep=1,saved=0,cover=""){
 showPage("details");
+currentDrama=id;
+currentCover=cover;
 
-const episodes=await apiCall(`/api/v1/episodes/${id}`);
+const data=await apiCall(`/api/v1/episodes/${id}`);
+if(!data?.data?.list) return;
 
-if(!episodes?.data?.list) return;
+totalEpisodes=data.data.list.length;
 
 const wrap=document.getElementById("episodes");
 wrap.innerHTML="";
 
-episodes.data.list.forEach(ep=>{
+data.data.list.forEach(e=>{
 const btn=document.createElement("div");
 btn.className="ep-btn";
-btn.textContent=ep.episodeNo;
-btn.onclick=()=>playEpisode(id,ep.episodeNo);
+btn.textContent=e.episodeNo;
+btn.onclick=()=>playEpisode(id,e.episodeNo,0);
 wrap.appendChild(btn);
 });
 
-playEpisode(id,1);
+playEpisode(id,ep,saved);
 }
 
-async function playEpisode(id,epNo){
+async function playEpisode(id,epNo,saved=0){
 const watch=await apiCall(`/api/v1/episode/${id}/${epNo}`);
-
 if(!watch?.data?.videoUrl) return;
 
 const player=document.getElementById("player");
 player.src=watch.data.videoUrl;
+
+player.onloadedmetadata=()=>{
+if(saved>0 && saved<player.duration){
+player.currentTime=saved;
+}
 player.play().catch(()=>{});
+};
 
 document.querySelectorAll(".ep-btn").forEach(b=>b.classList.remove("playing"));
 const active=[...document.querySelectorAll(".ep-btn")]
 .find(b=>b.textContent==epNo);
 if(active) active.classList.add("playing");
+
+player.ontimeupdate=()=>{
+if(player.duration){
+saveContinue({
+id:id,
+ep:epNo,
+currentTime:player.currentTime,
+duration:player.duration,
+cover:currentCover,
+title:watch.data.title
+});
+}
+};
 }
 
 function goHome(){
-document.getElementById("player").pause();
+player.pause();
 showPage("home");
 }
 
