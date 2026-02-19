@@ -237,7 +237,9 @@ document.getElementById("detailsPage").style.display=page==="details"?"block":"n
 
 async function apiCall(endpoint){
 const r=await fetch(`${API}?url=${encodeURIComponent("https://captain.sapimu.au/netshort"+endpoint)}`);
-return r.json();
+const json=await r.json();
+console.log("API:",endpoint,json);
+return json;
 }
 
 /* FLEXIBLE VIDEO RESOLVER */
