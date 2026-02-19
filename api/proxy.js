@@ -27,9 +27,18 @@ export default async function handler(req, res) {
       headers: {
         Authorization: `Bearer ${process.env.API_TOKEN}`,
         Origin: origin,
-        Referer: origin
+        Referer: origin,
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
+        Accept: "application/json, text/plain, */*"
       }
     });
+
+    if (!apiResponse.ok) {
+      const errText = await apiResponse.text();
+      console.error("Upstream error:", errText);
+      return res.status(apiResponse.status).json({ error: errText });
+    }
 
     const contentType = apiResponse.headers.get("content-type");
 
