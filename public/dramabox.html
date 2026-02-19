@@ -60,7 +60,7 @@ align-items:center;
 gap:14px;
 }
 
-.logo-wrap img{width:80px;}
+.logo-wrap img{width:80px}
 
 .logo-text{
 font-size:26px;
@@ -110,15 +110,17 @@ max-width:600px;
 z-index:2;
 }
 
-/* Sections */
-.section{
-padding:30px 5%;
-position:relative;
+.hero-content h1{font-size:34px;margin-bottom:10px}
+.hero-content p{
+font-size:14px;
+line-height:1.6;
+max-height:70px;
+overflow:hidden;
 }
 
-.section h2{
-margin-bottom:15px;
-}
+/* Sections */
+.section{padding:30px 5%;position:relative}
+.section h2{margin-bottom:15px}
 
 .scroll-row{
 display:flex;
@@ -128,6 +130,23 @@ scroll-behavior:smooth;
 }
 
 .scroll-row::-webkit-scrollbar{display:none}
+
+.scroll-btn{
+position:absolute;
+top:50%;
+transform:translateY(-50%);
+background:rgba(0,0,0,.6);
+border:none;
+color:white;
+width:35px;
+height:35px;
+border-radius:50%;
+cursor:pointer;
+z-index:10;
+}
+
+.scroll-left{left:2%}
+.scroll-right{right:2%}
 
 /* CARD */
 .card{
@@ -149,19 +168,17 @@ object-fit:cover;
 }
 
 .card-title{
-padding:10px;
+padding:10px 8px 12px 8px;
 font-size:13px;
 text-align:center;
+height:2.8em;
 display:-webkit-box;
 -webkit-line-clamp:2;
 -webkit-box-orient:vertical;
 overflow:hidden;
 }
 
-.progress-bar{
-height:4px;
-background:var(--red);
-}
+.progress-bar{height:4px;background:var(--red)}
 
 .badge{
 position:absolute;
@@ -181,37 +198,21 @@ right:8px;
 background:rgba(0,0,0,.7);
 border:none;
 color:white;
-font-size:12px;
 width:22px;
 height:22px;
 border-radius:50%;
 cursor:pointer;
+font-size:14px;
 z-index:5;
-}
-
-.remove-btn:hover{
-background:var(--red);
 }
 
 /* DETAILS */
 .details{display:none;padding:30px 5%}
 
-.video-wrap{
-max-width:900px;
-margin:auto;
-}
+.video-wrap{max-width:900px;margin:auto}
+video{width:100%;border-radius:8px}
 
-video{
-width:100%;
-border-radius:8px;
-}
-
-.autoplay{
-margin-top:10px;
-display:flex;
-gap:8px;
-align-items:center;
-}
+.autoplay{margin-top:10px;display:flex;gap:8px}
 
 .episodes{
 margin-top:20px;
@@ -277,21 +278,19 @@ font-weight:600;
 </div>
 
 <script>
-
 const API="/api/proxy";
 const ACCESS_KEY="koroi2026";
 
-let heroList=[],heroIndex=0;
+let heroList=[],heroIndex=0,heroTimer;
 let currentDrama=null,currentEpisode=0,totalEpisodes=0,currentCover="";
 
-/* PLATFORM SWITCH */
 function switchPlatform(){
 window.location.href="index.html?access="+ACCESS_KEY;
 }
 
 function showPage(page){
-document.getElementById("homepage").style.display=page==="home"?"block":"none";
-document.getElementById("detailsPage").style.display=page==="details"?"block":"none";
+homepage.style.display=page==="home"?"block":"none";
+detailsPage.style.display=page==="details"?"block":"none";
 }
 
 async function apiCall(endpoint){
@@ -299,7 +298,49 @@ const r=await fetch(`${API}?url=${encodeURIComponent("https://captain.sapimu.au"
 return r.json();
 }
 
-/* CONTINUE SYSTEM */
+/* HERO */
+async function updateHero(){
+const item=heroList[heroIndex];
+if(!item) return;
+
+heroTitle.textContent=item.bookName;
+heroDesc.textContent=item.introduction;
+heroBtn.onclick=()=>openDetails(item.bookId,0,0,item.cover);
+
+const watch=await apiCall(`/dramabox/api/v1/watch/${item.bookId}/0`);
+if(watch?.data?.videoUrl){
+heroVideo.src=watch.data.videoUrl;
+heroVideo.play().catch(()=>{});
+}
+}
+
+function startHero(){
+updateHero();
+heroTimer=setInterval(()=>{
+heroIndex=(heroIndex+1)%heroList.length;
+updateHero();
+},8000);
+}
+
+/* LOAD */
+async function loadAll(){
+const [terbaru,hot,must] = await Promise.all([
+apiCall("/dramabox/api/v1/new/1?pageSize=20"),
+apiCall("/dramabox/api/v1/rank/1?pageSize=20"),
+apiCall("/dramabox/api/v1/classify?pageSize=20&sort=1")
+]);
+
+heroList=terbaru.data.list.slice(0,5);
+startHero();
+
+createSection("Terbaru",terbaru.data.list);
+createSection("Paling Hangat",hot.data.list);
+createSection("Mesti Tonton",must.data.list);
+
+renderContinue();
+}
+
+/* CONTINUE */
 function getContinue(){
 return JSON.parse(localStorage.getItem("continueWatching")||"[]");
 }
@@ -308,12 +349,11 @@ function saveContinue(data){
 let list=getContinue().filter(x=>x.bookId!==data.bookId);
 list.unshift(data);
 localStorage.setItem("continueWatching",JSON.stringify(list.slice(0,10)));
-renderContinue();
 }
 
-function removeContinue(e,bookId){
+function removeContinue(e,id){
 e.stopPropagation();
-let list=getContinue().filter(x=>x.bookId!==bookId);
+let list=getContinue().filter(x=>x.bookId!==id);
 localStorage.setItem("continueWatching",JSON.stringify(list));
 renderContinue();
 }
@@ -326,15 +366,13 @@ renderContinue();
 }
 
 function renderContinue(){
-const section=document.getElementById("continueSection");
 const list=getContinue();
-
 if(!list.length){
-section.innerHTML="";
+continueSection.innerHTML="";
 return;
 }
 
-section.innerHTML=`
+continueSection.innerHTML=`
 <div class="section">
 <div style="display:flex;justify-content:space-between;align-items:center;">
 <h2>Continue Watching</h2>
@@ -347,11 +385,10 @@ Clear All
 </div>
 `;
 
-const row=section.querySelector(".scroll-row");
+const row=continueSection.querySelector(".scroll-row");
 
 list.forEach(item=>{
 const percent=item.duration?((item.currentTime/item.duration)*100):0;
-
 const card=document.createElement("div");
 card.className="card";
 card.innerHTML=`
@@ -359,22 +396,39 @@ card.innerHTML=`
 <div class="badge">Episode ${item.episode}/${item.total}</div>
 <img src="${item.cover}">
 <div class="progress-bar" style="width:${percent}%"></div>
-<div class="card-title">${item.title}</div>
-`;
-
+<div class="card-title">${item.title}</div>`;
 card.onclick=()=>openDetails(item.bookId,item.episode-1,item.currentTime,item.cover);
-
 row.appendChild(card);
 });
 }
 
-/* AUTO REMOVE WHEN FINISHED */
-function autoRemoveIfFinished(index){
-if(index+1 >= totalEpisodes){
-let list=getContinue().filter(x=>x.bookId!==currentDrama);
-localStorage.setItem("continueWatching",JSON.stringify(list));
-renderContinue();
-}
+/* CATEGORY */
+function createSection(title,list){
+const sec=document.createElement("div");
+sec.className="section";
+sec.innerHTML=`
+<h2>${title}</h2>
+<button class="scroll-btn scroll-left">‹</button>
+<button class="scroll-btn scroll-right">›</button>
+<div class="scroll-row"></div>`;
+
+const row=sec.querySelector(".scroll-row");
+
+list.forEach(item=>{
+const card=document.createElement("div");
+card.className="card";
+card.innerHTML=`
+<div class="badge">${item.chapterCount} Episod</div>
+<img src="${item.cover}">
+<div class="card-title">${item.bookName}</div>`;
+card.onclick=()=>openDetails(item.bookId,0,0,item.cover);
+row.appendChild(card);
+});
+
+sec.querySelector(".scroll-left").onclick=()=>row.scrollBy({left:-300,behavior:"smooth"});
+sec.querySelector(".scroll-right").onclick=()=>row.scrollBy({left:300,behavior:"smooth"});
+
+categoryContainer.appendChild(sec);
 }
 
 /* DETAILS */
@@ -387,32 +441,21 @@ currentCover=cover;
 const chapters=await apiCall(`/dramabox/api/v1/chapters/${id}`);
 totalEpisodes=chapters.data.chapterList.length;
 
-const wrap=document.getElementById("episodes");
-wrap.innerHTML="";
-
+episodes.innerHTML="";
 chapters.data.chapterList.forEach(ch=>{
 const btn=document.createElement("div");
 btn.className="ep-btn";
 btn.textContent=ch.chapterIndex+1;
 btn.dataset.index=ch.chapterIndex;
 btn.onclick=()=>playEpisode(ch.chapterIndex,0);
-wrap.appendChild(btn);
+episodes.appendChild(btn);
 });
 
 playEpisode(ep,savedTime);
 }
 
 async function playEpisode(index,savedTime=0){
-
-currentEpisode=index;
-
 const watch=await apiCall(`/dramabox/api/v1/watch/${currentDrama}/${index}`);
-const player=document.getElementById("player");
-
-player.pause();
-player.src="";
-player.load();
-
 player.src=watch.data.videoUrl;
 
 player.onloadedmetadata=()=>{
@@ -427,7 +470,10 @@ const active=document.querySelector(`.ep-btn[data-index="${index}"]`);
 if(active) active.classList.add("playing");
 
 player.onended=()=>{
-autoRemoveIfFinished(index);
+if(index+1>=totalEpisodes){
+localStorage.removeItem("continueWatching");
+renderContinue();
+}
 if(document.getElementById("autoplayToggle").checked && index+1<totalEpisodes){
 playEpisode(index+1,0);
 }
@@ -449,7 +495,6 @@ title:watch.data.bookName
 }
 
 function goHome(){
-const player=document.getElementById("player");
 player.pause();
 player.src="";
 showPage("home");
@@ -458,7 +503,7 @@ renderContinue();
 
 loadAll();
 showPage("home");
-
 </script>
+
 </body>
 </html>
