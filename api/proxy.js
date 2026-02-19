@@ -10,14 +10,27 @@ export default async function handler(req, res) {
   }
 
   try {
+
+    // detect platform from url
+    let origin = "https://www.dramabox.com";
+
+    if (targetUrl.includes("/netshort/")) {
+      origin = "https://www.netshort.com";
+    }
+
     const apiResponse = await fetch(targetUrl, {
       headers: {
         Authorization: `Bearer ${process.env.API_TOKEN}`,
-        Origin: "https://www.dramabox.com"
+        Origin: origin
       }
     });
 
     const contentType = apiResponse.headers.get("content-type");
+
+    if (!apiResponse.ok) {
+      const errText = await apiResponse.text();
+      return res.status(apiResponse.status).send(errText);
+    }
 
     if (contentType && contentType.includes("application/json")) {
       const data = await apiResponse.json();
