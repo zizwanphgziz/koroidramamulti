@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/reelshort/*.js": {
+      "maxDuration": 60
+    }
+  }
+}
