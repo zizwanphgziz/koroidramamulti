@@ -33,26 +33,16 @@ justify-content:space-between;
 padding:16px 5%;
 }
 
-.logo-wrap{
-display:flex;
-align-items:center;
-gap:12px;
-}
-
-.logo-wrap img{
-width:70px;
-}
-
 .logo-text{
-font-size:24px;
+font-size:26px;
 font-weight:800;
-color:#ff2e63;
+color:var(--red);
 }
 
 .btn{
 background:var(--red);
 border:none;
-padding:8px 16px;
+padding:10px 18px;
 border-radius:6px;
 color:white;
 font-weight:600;
@@ -63,10 +53,11 @@ cursor:pointer;
 .hero{
 position:relative;
 height:65vh;
-overflow:hidden;
 display:flex;
 align-items:flex-end;
 padding:40px 5%;
+overflow:hidden;
+background:#000;
 }
 
 .hero video{
@@ -80,7 +71,7 @@ object-fit:cover;
 .hero-overlay{
 position:absolute;
 inset:0;
-background:linear-gradient(to top,rgba(0,0,0,.9),rgba(0,0,0,.2));
+background:linear-gradient(to top,rgba(0,0,0,.9),rgba(0,0,0,.3));
 }
 
 .hero-content{
@@ -89,12 +80,6 @@ z-index:2;
 max-width:600px;
 }
 
-.hero-content h1{
-font-size:28px;
-margin-bottom:10px;
-}
-
-/* SECTION */
 .section{
 padding:30px 5%;
 }
@@ -103,26 +88,30 @@ padding:30px 5%;
 display:flex;
 gap:14px;
 overflow-x:auto;
+scroll-behavior:smooth;
 }
 
-.scroll-row::-webkit-scrollbar{display:none}
+.scroll-row::-webkit-scrollbar{display:none;}
 
 .card{
 min-width:170px;
+max-width:170px;
 background:var(--card);
 border-radius:10px;
 overflow:hidden;
 cursor:pointer;
+display:flex;
+flex-direction:column;
 }
 
 .card img{
 width:100%;
-height:230px;
+height:240px;
 object-fit:cover;
 }
 
 .card-title{
-padding:8px;
+padding:10px;
 font-size:13px;
 text-align:center;
 }
@@ -133,6 +122,11 @@ display:none;
 padding:30px 5%;
 }
 
+.video-wrap{
+max-width:900px;
+margin:auto;
+}
+
 video{
 width:100%;
 border-radius:8px;
@@ -141,8 +135,10 @@ border-radius:8px;
 .episodes{
 margin-top:20px;
 display:grid;
-grid-template-columns:repeat(auto-fill,minmax(70px,1fr));
+grid-template-columns:repeat(auto-fill,minmax(80px,1fr));
 gap:8px;
+max-height:300px;
+overflow-y:auto;
 }
 
 .ep-btn{
@@ -163,11 +159,8 @@ background:var(--red);
 <body>
 
 <header>
-<div class="logo-wrap">
-<img src="https://captain.sapimu.au/logos/reelshort.png">
 <div class="logo-text">ReelShort</div>
-</div>
-<button class="btn" onclick="switchPlatform()">Tukar Platform</button>
+<button class="btn" onclick="goHome()">Home</button>
 </header>
 
 <div id="homepage">
@@ -176,16 +169,21 @@ background:var(--red);
 <div class="hero-overlay"></div>
 <div class="hero-content">
 <h1 id="heroTitle"></h1>
-<button class="btn" id="heroBtn">Tonton</button>
+<button class="btn" id="heroBtn">Tonton Sekarang</button>
 </div>
 </div>
 
-<div id="content"></div>
+<div class="section">
+<h2>For You</h2>
+<div class="scroll-row" id="feedRow"></div>
+</div>
 </div>
 
 <div id="detailsPage" class="details">
 <button class="btn" onclick="goHome()">← Kembali</button>
+<div class="video-wrap">
 <video id="player" controls></video>
+</div>
 <div class="episodes" id="episodes"></div>
 </div>
 
@@ -194,72 +192,64 @@ background:var(--red);
 const API="/api/proxy";
 const ACCESS_KEY="koroi2026";
 
-function switchPlatform(){
-window.location.href="index.html?access="+ACCESS_KEY;
-}
-
 function showPage(p){
 document.getElementById("homepage").style.display=p==="home"?"block":"none";
 document.getElementById("detailsPage").style.display=p==="details"?"block":"none";
 }
 
 async function apiCall(endpoint){
-const res=await fetch(`${API}?url=${encodeURIComponent("https://captain.sapimu.au"+endpoint)}`);
+const res=await fetch(`${API}?url=${encodeURIComponent("https://captain.sapimu.au/reelshort"+endpoint)}`);
 return res.json();
 }
 
-/* LOAD HOME */
-async function loadHome(){
+/* LOAD FEED */
+async function loadFeed(){
 
-const data=await apiCall("/reelshort/api/v1/foryou?lang=in");
+const data=await apiCall("/api/v1/foryou");
 
-if(!data?.data?.lists?.length) return;
+if(!data || data.code!==200) return;
 
-const books=data.data.lists[0].books;
+const list=data.data;
 
-if(!books?.length) return;
+if(!list.length) return;
 
-/* HERO */
-const hero=books[0];
+const hero=list[0];
 
-document.getElementById("heroTitle").textContent=hero.book_title;
-document.getElementById("heroBtn").onclick=()=>openDetails(hero);
+document.getElementById("heroTitle").textContent=hero.name;
+document.getElementById("heroBtn").onclick=()=>openDetails(hero.id);
 
-const heroVideo=document.getElementById("heroVideo");
-heroVideo.src=hero.start_play.video_pic;
+/* try load first episode preview */
+const chapters=await apiCall(`/api/v1/book/${hero.id}/chapters`);
+if(chapters?.data?.length){
+const firstChapter=chapters.data[0];
+const videoData=await apiCall(`/api/v1/book/${hero.id}/chapter/${firstChapter.id}/video`);
+if(videoData?.data?.url){
+document.getElementById("heroVideo").src=videoData.data.url;
+}
+}
 
-/* SECTION */
-const content=document.getElementById("content");
-content.innerHTML=`<div class="section"><h2>For You</h2><div class="scroll-row"></div></div>`;
+const row=document.getElementById("feedRow");
+row.innerHTML="";
 
-const row=content.querySelector(".scroll-row");
-
-books.forEach(book=>{
+list.forEach(item=>{
 const card=document.createElement("div");
 card.className="card";
 card.innerHTML=`
-<img src="${book.book_pic}">
-<div class="card-title">${book.book_title}</div>`;
-card.onclick=()=>openDetails(book);
+<img src="${item.cover}">
+<div class="card-title">${item.name}</div>
+`;
+card.onclick=()=>openDetails(item.id);
 row.appendChild(card);
 });
 }
 
-/* OPEN DETAILS */
-async function openDetails(book){
+/* DETAILS */
+async function openDetails(id){
 
 showPage("details");
 
-const player=document.getElementById("player");
-
-/* ambil video first chapter */
-const video=await apiCall(`/reelshort/api/v1/book/${book.book_id}/chapter/${book.start_play.chapter_id}/video?lang=in`);
-
-player.src=video.data.video_url;
-player.play().catch(()=>{});
-
-/* load episode list */
-const chapters=await apiCall(`/reelshort/api/v1/book/${book.book_id}/chapters?lang=in`);
+const chapters=await apiCall(`/api/v1/book/${id}/chapters`);
+if(!chapters?.data) return;
 
 const wrap=document.getElementById("episodes");
 wrap.innerHTML="";
@@ -267,15 +257,26 @@ wrap.innerHTML="";
 chapters.data.forEach(ch=>{
 const btn=document.createElement("div");
 btn.className="ep-btn";
-btn.textContent=ch.chapter_index+1;
-btn.onclick=()=>playEpisode(book.book_id,ch.chapter_id);
+btn.textContent=ch.episodeNo || ch.chapterNo || ch.index || "";
+btn.onclick=()=>playEpisode(id,ch.id);
 wrap.appendChild(btn);
 });
+
+/* autoplay first */
+if(chapters.data.length){
+playEpisode(id,chapters.data[0].id);
+}
 }
 
 async function playEpisode(bookId,chapterId){
-const video=await apiCall(`/reelshort/api/v1/book/${bookId}/chapter/${chapterId}/video?lang=in`);
-document.getElementById("player").src=video.data.video_url;
+
+const videoData=await apiCall(`/api/v1/book/${bookId}/chapter/${chapterId}/video`);
+
+if(videoData?.data?.url){
+const player=document.getElementById("player");
+player.src=videoData.data.url;
+player.play().catch(()=>{});
+}
 }
 
 function goHome(){
@@ -283,7 +284,7 @@ document.getElementById("player").pause();
 showPage("home");
 }
 
-loadHome();
+loadFeed();
 showPage("home");
 
 </script>
