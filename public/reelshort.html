@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReelShort</title>
+<link rel="icon" href="data:,">
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap');
+
+:root{
+--red:#ff2e63;
+--bg:#0b0b0f;
+--card:#14141c;
+}
+
+*{box-sizing:border-box}
+
+body{
+margin:0;
+font-family:Poppins;
+background:var(--bg);
+color:white;
+overflow-x:hidden;
+}
+
+/* HEADER */
+header{
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:16px 5%;
+}
+
+.logo-wrap{
+display:flex;
+align-items:center;
+gap:12px;
+}
+
+.logo-wrap img{
+width:70px;
+}
+
+.logo-text{
+font-size:24px;
+font-weight:800;
+color:#ff2e63;
+}
+
+.btn{
+background:var(--red);
+border:none;
+padding:8px 16px;
+border-radius:6px;
+color:white;
+font-weight:600;
+cursor:pointer;
+}
+
+/* HERO */
+.hero{
+position:relative;
+height:65vh;
+overflow:hidden;
+display:flex;
+align-items:flex-end;
+padding:40px 5%;
+}
+
+.hero video{
+position:absolute;
+inset:0;
+width:100%;
+height:100%;
+object-fit:cover;
+}
+
+.hero-overlay{
+position:absolute;
+inset:0;
+background:linear-gradient(to top,rgba(0,0,0,.9),rgba(0,0,0,.2));
+}
+
+.hero-content{
+position:relative;
+z-index:2;
+max-width:600px;
+}
+
+.hero-content h1{
+font-size:28px;
+margin-bottom:10px;
+}
+
+/* SECTION */
+.section{
+padding:30px 5%;
+}
+
+.scroll-row{
+display:flex;
+gap:14px;
+overflow-x:auto;
+}
+
+.scroll-row::-webkit-scrollbar{display:none}
+
+.card{
+min-width:170px;
+background:var(--card);
+border-radius:10px;
+overflow:hidden;
+cursor:pointer;
+}
+
+.card img{
+width:100%;
+height:230px;
+object-fit:cover;
+}
+
+.card-title{
+padding:8px;
+font-size:13px;
+text-align:center;
+}
+
+/* DETAILS */
+.details{
+display:none;
+padding:30px 5%;
+}
+
+video{
+width:100%;
+border-radius:8px;
+}
+
+.episodes{
+margin-top:20px;
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(70px,1fr));
+gap:8px;
+}
+
+.ep-btn{
+background:#1e1e27;
+padding:8px;
+text-align:center;
+border-radius:4px;
+cursor:pointer;
+font-size:12px;
+}
+
+.ep-btn.playing{
+background:var(--red);
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<div class="logo-wrap">
+<img src="https://captain.sapimu.au/logos/reelshort.png">
+<div class="logo-text">ReelShort</div>
+</div>
+<button class="btn" onclick="switchPlatform()">Tukar Platform</button>
+</header>
+
+<div id="homepage">
+<div class="hero">
+<video id="heroVideo" muted autoplay loop></video>
+<div class="hero-overlay"></div>
+<div class="hero-content">
+<h1 id="heroTitle"></h1>
+<button class="btn" id="heroBtn">Tonton</button>
+</div>
+</div>
+
+<div id="content"></div>
+</div>
+
+<div id="detailsPage" class="details">
+<button class="btn" onclick="goHome()">← Kembali</button>
+<video id="player" controls></video>
+<div class="episodes" id="episodes"></div>
+</div>
+
+<script>
+
+const API="/api/proxy";
+const ACCESS_KEY="koroi2026";
+
+function switchPlatform(){
+window.location.href="index.html?access="+ACCESS_KEY;
+}
+
+function showPage(p){
+document.getElementById("homepage").style.display=p==="home"?"block":"none";
+document.getElementById("detailsPage").style.display=p==="details"?"block":"none";
+}
+
+async function apiCall(endpoint){
+const res=await fetch(`${API}?url=${encodeURIComponent("https://captain.sapimu.au"+endpoint)}`);
+return res.json();
+}
+
+/* LOAD HOME */
+async function loadHome(){
+
+const data=await apiCall("/reelshort/api/v1/foryou?lang=in");
+
+if(!data?.data?.lists?.length) return;
+
+const books=data.data.lists[0].books;
+
+if(!books?.length) return;
+
+/* HERO */
+const hero=books[0];
+
+document.getElementById("heroTitle").textContent=hero.book_title;
+document.getElementById("heroBtn").onclick=()=>openDetails(hero);
+
+const heroVideo=document.getElementById("heroVideo");
+heroVideo.src=hero.start_play.video_pic;
+
+/* SECTION */
+const content=document.getElementById("content");
+content.innerHTML=`<div class="section"><h2>For You</h2><div class="scroll-row"></div></div>`;
+
+const row=content.querySelector(".scroll-row");
+
+books.forEach(book=>{
+const card=document.createElement("div");
+card.className="card";
+card.innerHTML=`
+<img src="${book.book_pic}">
+<div class="card-title">${book.book_title}</div>`;
+card.onclick=()=>openDetails(book);
+row.appendChild(card);
+});
+}
+
+/* OPEN DETAILS */
+async function openDetails(book){
+
+showPage("details");
+
+const player=document.getElementById("player");
+
+/* ambil video first chapter */
+const video=await apiCall(`/reelshort/api/v1/book/${book.book_id}/chapter/${book.start_play.chapter_id}/video?lang=in`);
+
+player.src=video.data.video_url;
+player.play().catch(()=>{});
+
+/* load episode list */
+const chapters=await apiCall(`/reelshort/api/v1/book/${book.book_id}/chapters?lang=in`);
+
+const wrap=document.getElementById("episodes");
+wrap.innerHTML="";
+
+chapters.data.forEach(ch=>{
+const btn=document.createElement("div");
+btn.className="ep-btn";
+btn.textContent=ch.chapter_index+1;
+btn.onclick=()=>playEpisode(book.book_id,ch.chapter_id);
+wrap.appendChild(btn);
+});
+}
+
+async function playEpisode(bookId,chapterId){
+const video=await apiCall(`/reelshort/api/v1/book/${bookId}/chapter/${chapterId}/video?lang=in`);
+document.getElementById("player").src=video.data.video_url;
+}
+
+function goHome(){
+document.getElementById("player").pause();
+showPage("home");
+}
+
+loadHome();
+showPage("home");
+
+</script>
+</body>
+</html>
