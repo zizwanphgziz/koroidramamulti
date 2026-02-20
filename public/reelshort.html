@@ -7,7 +7,7 @@
 
 <style>
 body{margin:0;background:#0b0b0f;color:white;font-family:Poppins}
-header{display:flex;justify-content:space-between;padding:16px 5%}
+header{display:flex;justify-content:space-between;padding:16px 5%;align-items:center}
 .hero{height:60vh;position:relative;background:#000;display:flex;align-items:flex-end;padding:40px 5%}
 .hero video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .hero-content{position:relative;z-index:2}
@@ -18,7 +18,9 @@ header{display:flex;justify-content:space-between;padding:16px 5%}
 .card-title{padding:8px;font-size:13px;text-align:center}
 .details{display:none;padding:20px 5%}
 video{width:100%;border-radius:8px}
-.ep-btn{background:#1e1e27;padding:8px;margin:4px;display:inline-block;cursor:pointer}
+.ep-btn{background:#1e1e27;padding:8px;margin:4px;display:inline-block;cursor:pointer;border-radius:4px}
+.ep-btn.playing{background:#E50914}
+button{background:#E50914;border:none;padding:8px 14px;color:white;border-radius:4px;cursor:pointer}
 </style>
 </head>
 
@@ -30,6 +32,7 @@ video{width:100%;border-radius:8px}
 </header>
 
 <div id="home">
+
 <div class="hero">
 <video id="heroVideo" muted autoplay loop></video>
 <div class="hero-content">
@@ -42,6 +45,7 @@ video{width:100%;border-radius:8px}
 <h3>For You</h3>
 <div class="scroll-row" id="feedRow"></div>
 </div>
+
 </div>
 
 <div id="details" class="details">
@@ -53,7 +57,10 @@ video{width:100%;border-radius:8px}
 <script>
 
 const API="/api/proxy";
+let currentBook=null;
+let currentChapters=[];
 
+/* API CALL */
 async function apiCall(endpoint){
 const res = await fetch(`${API}?url=${encodeURIComponent("https://captain.sapimu.au/reelshort"+endpoint)}`);
 return res.json();
@@ -69,14 +76,13 @@ console.log("Feed error", res);
 return;
 }
 
-const list = res.data;   // IMPORTANT: direct array
-
+const list = res.data;
 if(!list || !list.length) return;
 
 const hero = list[0];
+currentBook = hero;
 
 document.getElementById("heroTitle").textContent = hero.name || hero.title;
-
 document.getElementById("feedRow").innerHTML="";
 
 list.forEach(item=>{
@@ -90,59 +96,81 @@ card.onclick=()=>openDetails(item.id);
 document.getElementById("feedRow").appendChild(card);
 });
 
-/* Load preview hero */
 loadHeroPreview(hero.id);
 }
 
-async function loadHeroPreview(id){
+/* HERO PREVIEW */
+async function loadHeroPreview(bookId){
 
-const chapters = await apiCall(`/api/v1/book/${id}/chapters`);
+const chapters = await apiCall(`/api/v1/book/${bookId}/chapters`);
 if(!chapters?.data?.length) return;
 
-const first = chapters.data[0];
+currentChapters = chapters.data;
+const first = currentChapters[0];
 
-const video = await apiCall(`/api/v1/book/${id}/chapter/${first.id}/video`);
-if(video?.data?.url){
-document.getElementById("heroVideo").src = video.data.url;
+const encoded = encodeURIComponent(first.pageUrl || first.playUrl);
+
+document.getElementById("heroVideo").src = `/api/reelshort/watch?url=${encoded}`;
+}
+
+/* PLAY HERO */
+function playHero(){
+if(currentBook){
+openDetails(currentBook.id);
 }
 }
 
-/* DETAILS */
-async function openDetails(id){
+/* OPEN DETAILS */
+async function openDetails(bookId){
 
 document.getElementById("home").style.display="none";
 document.getElementById("details").style.display="block";
 
-const chapters = await apiCall(`/api/v1/book/${id}/chapters`);
-if(!chapters?.data) return;
+currentBook = bookId;
+
+const chapters = await apiCall(`/api/v1/book/${bookId}/chapters`);
+if(!chapters?.data?.length) return;
+
+currentChapters = chapters.data;
 
 const wrap=document.getElementById("episodes");
 wrap.innerHTML="";
 
-chapters.data.forEach(ch=>{
+currentChapters.forEach((ch,index)=>{
 const btn=document.createElement("div");
 btn.className="ep-btn";
-btn.textContent=ch.episodeNo || ch.chapterNo || ch.index;
-btn.onclick=()=>playEpisode(id,ch.id);
+btn.textContent = index+1;
+btn.onclick=()=>playEpisode(index);
 wrap.appendChild(btn);
 });
 
-if(chapters.data.length){
-playEpisode(id, chapters.data[0].id);
-}
+playEpisode(0);
 }
 
-async function playEpisode(bookId, chapterId){
+/* PLAY EPISODE (FIXED STREAM) */
+function playEpisode(index){
 
-const video = await apiCall(`/api/v1/book/${bookId}/chapter/${chapterId}/video`);
-
-if(video?.data?.url){
 const player=document.getElementById("player");
-player.src = video.data.url;
-player.play();
-}
+
+document.querySelectorAll(".ep-btn").forEach(btn=>btn.classList.remove("playing"));
+document.querySelectorAll(".ep-btn")[index].classList.add("playing");
+
+const episode = currentChapters[index];
+
+const encoded = encodeURIComponent(episode.pageUrl || episode.playUrl);
+
+player.pause();
+player.src="";
+player.load();
+
+player.src = `/api/reelshort/watch?url=${encoded}`;
+
+player.onloadedmetadata = ()=>{
+player.play().catch(()=>{});
+};
 }
 
+/* GO HOME */
 function goHome(){
 document.getElementById("details").style.display="none";
 document.getElementById("home").style.display="block";
